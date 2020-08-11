@@ -36,12 +36,10 @@ This approach relies on the utility of `R-Projects`. This provides a structured 
 
 ## Download the R-Project
 
-Download Github repository here: https://github.com/garberadamc/LTA-FAQ
+Download Github repository here: \textcolor{blue}{https://github.com/garberadamc/LTA-FAQ}
 
-On the Github repository webpage:
-
-a. Click the green `Code` menu button and choose `Download ZIP`
-b. For Github users, `fork` your own `branch` of the lab repository to create a version controlled project
+    For readers unfamiliar with Github and version controlled R-projects:
+    Within the repository site, click the green `Code` menu button and choose `Download ZIP`
 
 ## Project folder organization: nested structure
 
@@ -52,7 +50,7 @@ The following sub-folders will be used to contain files:
 3. "enum_LCA_time2"
 4. "LTA_models"
 
-\textcolor{red}{Note regarding choosing the project location:}
+\textcolor{red}{Note regarding choice of project location:}
 
 If the project folder is located within too many nested folders it may result in a file-path error
 when estimating models with `MplusAutomation`. 
@@ -63,27 +61,39 @@ when estimating models with `MplusAutomation`.
 
 In the following script, three types of comments are included in code blocks in which models are estimated using `MplusAutomation`. 
 
-- **Type 1 comment:** The hashtag symbol `#` identifies comments written in R-language form. 
-- **Type 2 comment:** Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (\textcolor{green}{green text}). To add comments use the Mplus language comment convention e.g., (\textcolor{green}{!!! annotate Mplus input !!!}).
-- **Type 3 comment:** To signal to the user areas of the syntax which must be adapted to fit specific modeling contexts the text, `NOTE CHANGE:` is used. 
+a. **Annotate in R:** The hashtag symbol `#` identifies comments written in R-language form. 
+b. **Annotate in Mplus input:** Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (green text). To add comments the Mplus language convention is used (e.g., !!! annotate Mplus input !!!).
+c. **Annotate context-specific syntax:** To signal to the user areas of the syntax which must be adapted to fit specific modeling contexts the text, `NOTE CHANGE:` is used. 
 
 ***
+
+To install package {`rhdf5`} 
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE)) 
+  install.packages("BiocManager")
+
+BiocManager::install("rhdf5")
+```
 
 Load packages
 ```{r, eval=TRUE}
 
-library(MplusAutomation) # package descriptions to be added
-library(tidyverse)       # package descriptions to be added
-library(here)            # package descriptions to be added
-library(glue)            # package descriptions to be added
-library(janitor)         # package descriptions to be added   
-library(gt)              # package descriptions to be added
+library(MplusAutomation)
+library(rhdf5)
+library(tidyverse)       
+library(here)            
+library(glue)            
+library(janitor)            
+library(gt) 
+library(rhdf5)
+library(reshape2)
+library(cowplot)
 
 ```
 
-Read in LSAY data file (CSV format)
+Read in LSAY data file 
 
-*Note:* LSAY data has been pre-processed.
+*Note:* The LSAY data file, `lsay_lta_faq_2020.csv`,  has been pre-processed.
 ```{r, eval=TRUE}
 
 lsay_data <- read_csv(here("data","lsay_lta_faq_2020.csv"),
@@ -132,7 +142,8 @@ t1_enum_k_16  <- lapply(1:6, function(k) {
   usevariables = colnames(lsay_data),
   rdata = lsay_data)
 
-# NOTE CHANGE: Fix to match appropriate sub-folder name: See after `here` function (e.g., "enum_LCA_time1")
+# NOTE CHANGE: Fix to match appropriate sub-folder name
+# See after `here` function (e.g., "enum_LCA_time1")
 enum_t1_fit <- mplusModeler(enum_t1,
                  dataout=here("enum_LCA_time1", "t1.dat"), 
                  modelout=glue(here("enum_LCA_time1", "c{k}_lca_enum_time1.inp")),
@@ -184,11 +195,112 @@ enum_t2_fit <- mplusModeler(enum_t2,
 
 ______________________________________________
 
-## Step 2: Create model fit summary table 
+## Plot LCAs
 
 ______________________________________________
 
-Read models and extract data to compose the model fit table 
+Read models 
+```{r, eval=TRUE}
+
+# timepoint 1
+output_enum_t1 <- readModels(here("enum_LCA_time1"), quiet = TRUE)
+# timepoint 2
+output_enum_t2 <- readModels(here("enum_LCA_time2"), quiet = TRUE)
+```
+
+Plot time 1 LCA
+```{r, eval=TRUE}
+# extract posterior probabilities 
+plot_t1 <- as.data.frame(output_enum_t1[["c4_lca_enum_time1.out"]]
+                           [["gh5"]][["means_and_variances_data"]]
+                           [["estimated_probs"]][["values"]]
+                           [seq(2, 10, 2),]) #seq("from","to","by")
+
+# extract class size proportions
+c_size <- as.data.frame(output_enum_t1[["c4_lca_enum_time1.out"]]
+                        [["class_counts"]][["modelEstimated"]][["proportion"]])
+colnames(c_size) <- paste0("cs")
+c_size <- c_size %>% mutate(cs = round(cs*100, 2))
+
+#rename class and indicator names
+colnames(plot_t1) <- paste0("C", 1:4, glue(" ({c_size[1:4,]}%)"))
+plot_t1 <- cbind(Var = paste0("U", 1:5), plot_t1)
+
+plot_t1$Var <- factor(plot_t1$Var,
+               levels = c("U1","U2","U3","U4","U5"),
+               labels = c("Enjoy","Useful","Logical","Job","Adult"))
+
+#change data-frame from wide to long format
+pd_long_t1 <- melt(plot_t1, id.vars = "Var") 
+
+# plot data
+ggplot(pd_long_t1, aes(as.integer(Var), value, shape = variable, 
+                    colour = variable, lty = variable)) +
+  geom_point(size = 4) + geom_line() + 
+  scale_x_continuous("", breaks = 1:5, labels = plot_t1$Var) + 
+  scale_y_continuous("Probability") + 
+  scale_colour_grey() + 
+  theme_cowplot() +
+  theme(legend.title = element_blank(), 
+        legend.position = "top")
+
+```
+
+```{r}
+ggsave(here("figures", "T1_C4_LCA_plot.png"), dpi="retina", height=5, width=7, units="in")
+```
+
+Plot time 2 LCA
+```{r, eval=TRUE}
+
+# extract posterior probabilities 
+plot_t2 <- as.data.frame(output_enum_t2[["c4_lca_enum_time2.out"]]
+                         [["gh5"]][["means_and_variances_data"]]
+                         [["estimated_probs"]][["values"]]
+                         [seq(2, 10, 2),]) #seq("from","to","by")
+
+# extract class size proportions
+c_size <- as.data.frame(output_enum_t2[["c4_lca_enum_time2.out"]]
+                        [["class_counts"]][["modelEstimated"]][["proportion"]])
+colnames(c_size) <- paste0("cs")
+c_size <- c_size %>% mutate(cs = round(cs*100, 2))
+
+#rename class and indicator names
+colnames(plot_t2) <- paste0("C", 1:4, glue(" ({c_size[1:4,]}%)"))
+plot_t2 <- cbind(Var = paste0("U", 1:5), plot_t1)
+
+plot_t2$Var <- factor(plot_t2$Var,
+               levels = c("U1","U2","U3","U4","U5"),
+               labels = c("Enjoy","Useful","Logical","Job","Adult"))
+
+#change data-frame from wide to long format
+pd_long_t2 <- melt(plot_t2, id.vars = "Var") 
+
+# plot data
+ggplot(pd_long_t2, aes(as.integer(Var), value, shape = variable, 
+                       colour = variable, lty = variable)) +
+  geom_point(size = 4) + geom_line() + 
+  scale_x_continuous("", breaks = 1:5, labels = plot_t2$Var) + 
+  scale_y_continuous("Probability") + 
+  # labs(title = "LCA Probability Plot") +
+  scale_colour_grey() + 
+  theme_cowplot() +
+  theme(legend.title = element_blank(), 
+        legend.position = "top")
+
+```
+
+```{r}
+ggsave(here("figures", "T2_C4_LCA_plot.png"), dpi="retina", height=5, width=7, units="in")
+```
+
+______________________________________________
+
+# Step 2: Create model fit summary table 
+
+______________________________________________
+
+Extract model fit data 
 ```{r, eval=TRUE}
 
 # timepoint 1
@@ -258,10 +370,11 @@ allFit %>%
     cmPk = md("*cmP_k*")) %>%
   tab_footnote(
     footnote = md(
-      "*Note.* Par = Parameters; *LL* = model log likelihood; BIC = Bayesian information criterion;
+    "*Note.* Par = Parameters; *LL* = model log likelihood; BIC = Bayesian information criterion;
       aBIC = sample size adjusted BIC; CAIC = consistent Akaike information criterion;
       AWE = approximate weight of evidence criterion; BLRT = bootstrapped likelihood ratio test p-value;
-      VLMR = Vuong-Lo-Mendell-Rubin adjusted likelihood ratio test p-value; cmPk = approximate correct model probability."), 
+      VLMR = Vuong-Lo-Mendell-Rubin adjusted likelihood ratio test p-value;
+      cmPk = approximate correct model probability."), 
     locations = cells_title()) %>% 
   tab_options(column_labels.font.weight = "bold") %>% 
   fmt_number(10,decimals = 2,
@@ -272,7 +385,7 @@ allFit %>%
   fmt(c(8:9,11),
     fns = function(x) 
     ifelse(x<0.001, "<.001", scales::number(x, accuracy = 0.01))) %>%
-    fmt(10, fns = function(x) 
+  fmt(10, fns = function(x) 
     ifelse(x>100, ">100", scales::number(x, accuracy = .1))) %>%
   tab_row_group(
     group = "Time-1",
@@ -290,7 +403,7 @@ ____________________________________
 
 ____________________________________
 
-## Run freely estimated LTA model (non-invariant)
+## Estimate non-invariant estimated LTA model
 
 ____________________________________
 
@@ -312,16 +425,17 @@ lta_non_inv <- mplusObject(
   ANALYSIS = 
      "estimator = mlr;
       type = mixture;
-      starts = 500 100;",
+      starts = 500 100;
+      processors=10;",
 
   MODEL = 
      "%overall%
       c2 on c1; !!! estimate all multinomial logistic regressions !!!
       
-      ! This is the same syntax as written below:
-      ! c2#1 on c1#1 c1#2 c1#3;   
-      ! c2#2 on c1#1 c1#2 c1#3;
-      ! c2#3 on c1#1 c1#2 c1#3;
+      !!! The above syntax can also be written as: !!!
+               ! c2#1 on c1#1 c1#2 c1#3; !  
+               ! c2#2 on c1#1 c1#2 c1#3; !
+               ! c2#3 on c1#1 c1#2 c1#3; !
 
       MODEL c1:
       %c1#1%
@@ -356,7 +470,7 @@ lta_non_inv_fit <- mplusModeler(lta_non_inv,
 
 ____________________________________
 
-## Run invariant LTA model 
+## Estimate invariant LTA model 
 
 ____________________________________
 
@@ -378,7 +492,8 @@ lta_inv <- mplusObject(
   ANALYSIS = 
      "estimator = mlr;
       type = mixture;
-      starts = 500 100;",
+      starts = 500 100;
+      processors=10;",
 
   MODEL = 
      "%overall%
@@ -420,6 +535,39 @@ lta_inv_fit <- mplusModeler(lta_inv,
                  check=TRUE, run = TRUE, hashfilename = FALSE)
 ```
 
+Conduct Satorra-Bentler $\chi^2$ difference testing 
+```{r}
+# one with more parameters is parent (non-invariant), one with fewer parameters is the nested model (invariant model)
+
+# *0 (null or nested model) & *1 (comparison model)
+
+lta_models <- readModels(here("LTA_models"), quiet = TRUE)
+
+T1 <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
+T0 <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
+c1  <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+c0  <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+d1  <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
+d0  <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
+df  <- abs(d0-d1)
+
+# Satora-Bentler scaled Difference test equations
+cd <- (((d0*c0)-(d1*c1))/(d0-d1))
+t  <- (((T0*c0)-(T1*c1))/(cd))
+
+# Chi-square and degrees of freedom
+t
+df
+
+# Significance test
+p_diff <- pchisq(t, df, lower.tail=FALSE)
+
+```
+
+**RESULT**: The Satorra-Bentler scaled $\chi^2$ difference test comparing the invariant and non-invariant LTA models was, $T (19) = 20.58, p = 1.0$.
+
+***
+
 Alternate, less verbose way to run LTA with the `createMixtures` function.
 ```{r, eval=FALSE}
 
@@ -453,7 +601,7 @@ select(1:3) %>%
   mutate(est = as.numeric(est))
 ```
 
-Manual method to calculate transition probabilities 
+Manual method to calculate transition probabilities. Although possible to extract transition probabilities directly from the output this exercise shows how the parameters are used to calculate each transition. This is useful for conducting advanced LTA model specifications such as making specific constraints to the transitions. 
 ```{r, eval=TRUE}
 # Name each parameter individually to make the subsequent calculations more readable
 a1 <- unlist(par[13,3]); a2 <- unlist(par[14,3]); a3 <- unlist(par[15,3]); b11 <- unlist(par[1,3]);
@@ -496,10 +644,10 @@ t_matrix <- tibble(
 t_matrix %>% 
   gt(rowname_col = "Time1") %>% 
   tab_header(
-    title = md("**Student transitions from 7th grade (rows) to 10th grade (columns)**"), subtitle = md("&nbsp;")) %>% 
+    title = md("**Student transitions from 7th grade (rows) to 10th grade (columns)**"),
+    subtitle = md("&nbsp;")) %>% 
   fmt_number(2:5,decimals = 2) %>% 
   tab_spanner(label = "10th grade",columns = 2:5)
-
 
 ```
 
@@ -513,93 +661,9 @@ t_matrix %>%
 
 ***
 
-## Type 1 LTA plot: use `plotLTA`
-
-- issue1: node proportions & transition proportions missing
-- issue2: change to faceted plot 
-
 ```{r, eval=TRUE}
 MplusAutomation::plotLTA(lta_inv1)
 ```
-
-## Type 2 LTA plot: `sankey` interactive chart (INCOMPLETE)
-
-- issue 1: Proportions at time 1 are incorrect. Unclear how to incorporate initial class size data into chart. 
-- issue 2: Unclear how to label node and transition. Examples to work from are unavailable.  
-
-Change to long-format
-```{r, eval=TRUE}
-trans_long <- t_matrix %>% 
-  pivot_longer(`C2=1`:`C2=4`, # The columns I'm gathering together
-           names_to = "Time2", # new column name for existing names
-         values_to = "value") # new column name to store values
-
-nodes <- data.frame(name=c(as.character(trans_long$Time1),
-                           as.character(trans_long$Time2)) %>%
-                      unique())
-
-trans_long$IDTime1=match(trans_long$Time1, nodes$name)-1 
-trans_long$IDTime2=match(trans_long$Time2, nodes$name)-1
-```
-
-Prepare colour scale
-```{r, eval=TRUE}
-ColourScal ='d3.scaleOrdinal().range([
-"#FDE725FF","#B4DE2CFF","#6DCD59FF","#35B779FF","#1F9E89FF",
-"#26828EFF","#31688EFF","#3E4A89FF","#482878FF","#440154FF"])'
-```
-
-```{r, eval=FALSE}
-#library(networkD3)
-
-sankeyNetwork(Links = trans_long, Nodes = nodes,
-              Source = "IDTime1", Target = "IDTime2",
-              Value = "value", NodeID = "name", 
-              sinksRight=FALSE, colourScale=ColourScal,
-              nodeWidth=40, fontSize=13, nodePadding=20)
-```
-
-## Type 3 LTA plot: `alluvial` (INCOMPLETE)
-
-- issue 1: Proportions at time 1 are incorrect. Unclear how to incorporate initial class size data into chart. 
-- issue 2: Unclear how to label node and transitions in a clear manner. Examples to work from are unavailable.  
-
-```{r, eval=FALSE}
-library(ggalluvial)
-#library(gghighlight)
-
-ggplot(trans_long,
-       aes(axis1 = Time1, axis2 = Time2,
-           y = value)) +
-  scale_x_discrete(limits = c("7th Grade", "10th Grade"), expand = c(.2, .05)) +
-  geom_alluvium(aes(fill = Time1), show.legend = FALSE) +
-  geom_stratum() +
-  #geom_text(stat = "alluvium", aes(label = round(value,2), color = Time1),
-  #          show.legend = FALSE, fontface = 2, position = position_nudge(x = -0.21)) +
-  theme_minimal()
-  # + gghighlight(label_key = value)
-
-```
-
-
-
-```{r}
-library(parcats)
-library(easyalluvial)
-
-p = alluvial_wide(t_matrix, max_variables = 5)
-
-parcats(p, marginal_histograms = TRUE, data_input = t_matrix)
-
-```
-
-
-
-```{r,eval=FALSE, include=FALSE}
-#library(grateful)
-cite_packages()
-```
-
 
 
 ***
