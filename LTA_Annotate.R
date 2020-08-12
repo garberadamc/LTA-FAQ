@@ -1,30 +1,37 @@
+# -----------------------------------------------------------------------------
 # ---
 # ---
-# title: "Appendix - LTA with MplusAutomation" ########################
+# title: "Appendix - LTA with MplusAutomation" 
 # ---
 # ---
 # -----------------------------------------------------------------------------
 
-
-# 
 # Rationale for MplusAutomation workflow: 
-# 
+
 # This R-script is intended to provide a template for running LTA and associated tasks in a systematic manner. Using this approach all code for data pre-processing, model estimation, tabulation, and figure processing can be contained within a single script providing clear documentation. It is the authors belief that this dramatically reduces risk of user-error, is conducive to open-science philosophy, and scientific transparency. All models are estimated using `Mplus` (cite) using the wrapping program `MplusAutomation` (cite). This method requires that the user to have the proprietary software `Mplus` installed on their OS. 
-# 
+
 # This approach relies on the utility of `R-Projects`. This provides a structured framework for organizing all associated data files, Mplus text files, scripts, and figures. Given the high output of Mplus files inherent to LTA modeling, creating a system of project sub-folders greatly improves organization (i.e., folders; 'data', 'mplus_files' 'figures', etc.) Additionally, the communication between R and Mplus requires the specification of file-paths a procedure which is streamlined by use of `R-projects`. Due to the reliance on file-paths the `here` package is utilized for reproducibility, by making all path syntax uniform across operating systems. 
-# 
-# ***
-# 
-# # Preparation
-# 
-# ## Download the R-Project
-# 
+
+# -----------------------------------------------------------------------------
+
+# Preparation
+
+# Download the R-Project
+
 # Download Github repository here: https://github.com/garberadamc/LTA-FAQ
-# 
-#     For readers unfamiliar with Github and version controlled R-projects:
-#     Within the repository site, click the green `Code` menu button and choose `Download ZIP`
-# 
-# ## Project folder organization: nested structure
+ 
+# For readers **unfamiliar with Github** and version controlled R-projects:
+
+# 1. On the repository page, click the green `Code` button and in menu choose option `Download ZIP`
+# 2. Place the un-zipped downloaded folder on your desktop
+# 3. Within this folder open the file with the blue cube icon that is file type `____.Rproj`
+# 4. Next open the file containing all analysis code named `LTA_Annotate.R`
+
+# **Note:** Alternatively, if preferred users may follow analyses using the Rmarkdown script (`.Rmd`).
+
+# -----------------------------------------------------------------------------
+
+# Project folder organization: nested structure
 # 
 # The following sub-folders will be used to contain files:
 # 
@@ -32,34 +39,34 @@
 # 2. "enum_LCA_time1"
 # 3. "enum_LCA_time2"
 # 4. "LTA_models"
+# 5. "figures"
 # 
 # Note regarding choice of project location:
-# 
+#
 # If the project folder is located within too many nested folders it may result in a file-path error
 # when estimating models with `MplusAutomation`. 
-# 
-# ***
-# 
-# ## Notation guide
-# 
+
+# -----------------------------------------------------------------------------
+# Notation guide
+
 # In the following script, three types of comments are included in code blocks in which models are estimated using `MplusAutomation`. 
-# 
+
 # a. **Annotate in R:** The hashtag symbol `#` identifies comments written in R-language form. 
+
 # b. **Annotate in Mplus input:** Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (green text). To add comments the Mplus language convention is used (e.g., !!! annotate Mplus input !!!).
+
 # c. **Annotate context-specific syntax:** To signal to the user areas of the syntax which must be adapted to fit specific modeling contexts the text, `NOTE CHANGE:` is used. 
-# 
-# ***
-# 
+
+# -----------------------------------------------------------------------------
 # To install package {`rhdf5`} 
-## ----------------------------------------------------------------------------------------------------------------
+
 if (!requireNamespace("BiocManager", quietly = TRUE)) 
   install.packages("BiocManager")
 
 BiocManager::install("rhdf5")
 
-# 
+# -----------------------------------------------------------------------------
 # Load packages
-## ------------------------------------------------------------------------------------------------------
 
 library(MplusAutomation)
 library(rhdf5)
@@ -72,33 +79,30 @@ library(rhdf5)
 library(reshape2)
 library(cowplot)
 
-
-# 
+# -----------------------------------------------------------------------------
 # Read in LSAY data file 
-# 
-# *Note:* The LSAY data file, `lsay_lta_faq_2020.csv`,  has been pre-processed.
-## ------------------------------------------------------------------------------------------------------
+
+# *Note:* The LSAY data file, `lsay_lta_faq_2020.csv`, has been pre-processed.
 
 lsay_data <- read_csv(here("data","lsay_lta_faq_2020.csv"),
                      na=c("9999","9999.00"))
 
+# -----------------------------------------------------------------------------
 # 
-# ____________________________________
+# Step 1: Enumeration
 # 
-# # Step 1: Enumeration
-# 
-# ____________________________________
-# 
-# ## Enumerate time point 1 (7th grade)
-## ----------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+# Enumerate time point 1 (7th grade)
 
 # NOTE CHANGE: '6' indicates the number of k-class models to estimate.
 # User can change this number it fit research context. 
 # In this example, the code loops or iterates over values 1 through 6 ( '{k}' ).
+
 t1_enum_k_16  <- lapply(1:6, function(k) { 
   enum_t1  <- mplusObject(                 
     
-# The 'glue' function inserts R code within {---} a string chunk.      
+# The 'glue' function inserts R code within a string or green text within quotes using the syntax {---}    
     TITLE = glue("Class-{k}_Time1"), 
   
     VARIABLE = glue( 
@@ -133,12 +137,11 @@ enum_t1_fit <- mplusModeler(enum_t1,
                  check=TRUE, run = TRUE, hashfilename = FALSE)
 })
 
+# -----------------------------------------------------------------------------
 
-# 
-# ____________________________________
-# 
-# ## Enumerate time point 2 (10th grade)
-## ----------------------------------------------------------------------------------------------------------------
+# Enumerate time point 2 (10th grade)
+
+# -----------------------------------------------------------------------------
 
 t2_enum_k_16  <- lapply(1:6, function(k) { 
   enum_t2  <- mplusObject(                 
@@ -174,24 +177,20 @@ enum_t2_fit <- mplusModeler(enum_t2,
                  check=TRUE, run = TRUE, hashfilename = FALSE)
 })
 
-
-# ______________________________________________
-# 
-# ## Plot LCAs
-# 
-# ______________________________________________
+# -----------------------------------------------------------------------------
+# Plot LCAs
+# -----------------------------------------------------------------------------
 
 # Read models 
-## ------------------------------------------------------------------------------------------------------
 
 # timepoint 1
 output_enum_t1 <- readModels(here("enum_LCA_time1"), quiet = TRUE)
 # timepoint 2
 output_enum_t2 <- readModels(here("enum_LCA_time2"), quiet = TRUE)
 
-# 
+# -----------------------------------------------------------------------------
 # Plot time 1 LCA
-## ------------------------------------------------------------------------------------------------------
+
 # extract posterior probabilities 
 plot_t1 <- as.data.frame(output_enum_t1[["c4_lca_enum_time1.out"]]
                            [["gh5"]][["means_and_variances_data"]]
@@ -226,14 +225,10 @@ ggplot(pd_long_t1, aes(as.integer(Var), value, shape = variable,
   theme(legend.title = element_blank(), 
         legend.position = "top")
 
+ggsave(here("figures", "T1_C4_LCA_plot.png"), dpi=300, height=5, width=7, units="in")
+# -----------------------------------------------------------------------------
 
-# 
-## ----------------------------------------------------------------------------------------------------------------
-ggsave(here("figures", "T1_C4_LCA_plot.png"), dpi="retina", height=5, width=7, units="in")
-
-# 
 # Plot time 2 LCA
-## ------------------------------------------------------------------------------------------------------
 
 # extract posterior probabilities 
 plot_t2 <- as.data.frame(output_enum_t2[["c4_lca_enum_time2.out"]]
@@ -270,20 +265,14 @@ ggplot(pd_long_t2, aes(as.integer(Var), value, shape = variable,
   theme(legend.title = element_blank(), 
         legend.position = "top")
 
+ggsave(here("figures", "T2_C4_LCA_plot.png"), dpi=300, height=5, width=7, units="in")
+# -----------------------------------------------------------------------------
 
-# 
-## ----------------------------------------------------------------------------------------------------------------
-ggsave(here("figures", "T2_C4_LCA_plot.png"), dpi="retina", height=5, width=7, units="in")
+# -----------------------------------------------------------------------------
+# Step 2: Create model fit summary table 
+# -----------------------------------------------------------------------------
 
-# 
-# ______________________________________________
-# 
-# # Step 2: Create model fit summary table 
-# 
-# ______________________________________________
-# 
 # Extract model fit data 
-## ------------------------------------------------------------------------------------------------------
 
 # timepoint 1
 output_enum_t1 <- readModels(here("enum_LCA_time1"), quiet = TRUE)
@@ -298,11 +287,9 @@ enum_extract2 <- LatexSummaryTable(output_enum_t2,
                 keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC",
                            "BLRT_PValue", "T11_VLMR_PValue","Observations")) 
 
-# 
-# ***
-# 
+# -----------------------------------------------------------------------------
 # Calculate indices derived from the Log Likelihood (LL)
-## ------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
                            
 allFit1 <- enum_extract1 %>% 
   mutate(aBIC = -2*LL+Parameters*log((Observations+2)/24)) %>% 
@@ -329,11 +316,9 @@ allFit2 <- enum_extract2 %>%
 allFit <- full_join(allFit1,allFit2)
 
 
-# 
-# ***
-# 
+# -----------------------------------------------------------------------------
 # Format table 
-## ------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 allFit %>% 
   mutate(Title = str_remove(Title, "_Time*")) %>% 
@@ -378,18 +363,11 @@ allFit %>%
   row_group_order(
       groups = c("Time-1","Time-2"))
 
-# 
-# ____________________________________
-# 
+# -----------------------------------------------------------------------------
 # # Step 3: Estimate Latent Transition Analysis
+# -----------------------------------------------------------------------------
 # 
-# ____________________________________
-# 
-# ## Estimate non-invariant estimated LTA model
-# 
-# ____________________________________
-# 
-## ----------------------------------------------------------------------------------------------------------------
+# Estimate non-invariant estimated LTA model
 
 lta_non_inv <- mplusObject(
   
@@ -446,17 +424,12 @@ lta_non_inv <- mplusObject(
 
 lta_non_inv_fit <- mplusModeler(lta_non_inv,
                      dataout=here("enum_LCA_time2", "lta.dat"),
-                     modelout=here("LTA_models", "4-Class-Non-Invariant.inp"),
+                     modelout=here("LTA_models", "4-class-non-invariant.inp"),
                      check=TRUE, run = TRUE, hashfilename = FALSE)
 
-# 
-# ____________________________________
-# 
+# -----------------------------------------------------------------------------
 # ## Estimate invariant LTA model 
-# 
-# ____________________________________
-# 
-## ----------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 lta_inv <- mplusObject(
   
@@ -513,25 +486,26 @@ lta_inv <- mplusObject(
 
 lta_inv_fit <- mplusModeler(lta_inv,
                  dataout=here("enum_LCA_time2", "lta.dat"),
-                 modelout=here("LTA_models", "4-Class-Invariant.inp"),
+                 modelout=here("LTA_models", "4-class-invariant.inp"),
                  check=TRUE, run = TRUE, hashfilename = FALSE)
 
-# 
+# -----------------------------------------------------------------------------
 # Conduct Satorra-Bentler $\chi^2$ difference testing 
-## ----------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 # one with more parameters is parent (non-invariant), one with fewer parameters is the nested model (invariant model)
 
 # *0 (null or nested model) & *1 (comparison model)
 
 lta_models <- readModels(here("LTA_models"), quiet = TRUE)
 
-T1 <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
-T0 <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
-c1  <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
-c0  <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
-d1  <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
-d0  <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
-df  <- abs(d0-d1)
+T1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
+T0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
+c1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+c0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+d1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
+d0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
+df <- abs(d0-d1)
 
 # Satora-Bentler scaled Difference test equations
 cd <- (((d0*c0)-(d1*c1))/(d0-d1))
@@ -544,14 +518,11 @@ df
 # Significance test
 p_diff <- pchisq(t, df, lower.tail=FALSE)
 
+# **RESULT**: The Satorra-Bentler scaled $\chi^2$ difference test comparing the invariant and non-invariant LTA models was, $T (19) = 20.05, p = .39$.
 
-# 
-# **RESULT**: The Satorra-Bentler scaled $\chi^2$ difference test comparing the invariant and non-invariant LTA models was, $T (19) = 20.58, p = 1.0$.
-# 
-# ***
-# 
+# -----------------------------------------------------------------------------
 # Alternate, less verbose way to run LTA with the `createMixtures` function.
-## -----------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
  
  data <- lsay_data %>% select(5:14) # select only the indicator variables
  
@@ -569,10 +540,10 @@ p_diff <- pchisq(t, df, lower.tail=FALSE)
  runModels(filefilter = "sci_attitude")
  
  results <- readModels(filefilter = "sci_attitude")
- 
 
+# -----------------------------------------------------------------------------
 # Read invariance model and extract parameters (intercepts and multinomial regression coefficients) 
-## ------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 lta_inv1 <- readModels(here("LTA_models","4-Class-Invariant.out" ), quiet = TRUE)
 
@@ -581,9 +552,9 @@ select(1:3) %>%
   filter(grepl('ON|Means', paramHeader)) %>% 
   mutate(est = as.numeric(est))
 
-# 
+# -----------------------------------------------------------------------------
 # Manual method to calculate transition probabilities. Although possible to extract transition probabilities directly from the output this exercise shows how the parameters are used to calculate each transition. This is useful for conducting advanced LTA model specifications such as making specific constraints to the transitions. 
-## ------------------------------------------------------------------------------------------------------
+
 # Name each parameter individually to make the subsequent calculations more readable
 a1 <- unlist(par[13,3]); a2 <- unlist(par[14,3]); a3 <- unlist(par[15,3]); b11 <- unlist(par[1,3]);
 b21 <- unlist(par[4,3]); b31 <- unlist(par[7,3]); b12 <- unlist(par[2,3]); b22 <- unlist(par[5,3]);
@@ -610,10 +581,9 @@ t42 <- exp(a2)/(exp(a1)+exp(a2)+exp(a3)+exp(0))
 t43 <- exp(a3)/(exp(a1)+exp(a2)+exp(a3)+exp(0))
 t44 <- 1 - (t41 + t42 + t43)
 
-
-# 
+# -----------------------------------------------------------------------------
 # Create transition table 
-## ------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 t_matrix <- tibble(
   "Time1" = c("C1=1","C1=2","C1=3","C1=4"),
@@ -630,37 +600,26 @@ t_matrix %>%
   fmt_number(2:5,decimals = 2) %>% 
   tab_spanner(label = "10th grade",columns = 2:5)
 
+# -----------------------------------------------------------------------------
+# Plot LTA transitions 
+# -----------------------------------------------------------------------------
 
-# 
-# ***
-# 
-# # END COPY EDITING - ALL PLOTS CURRENTLY INCOMPLETE
-# 
-# ***
-# 
-# # Plot LTA transitions 
-# 
-# ***
-# 
-## ------------------------------------------------------------------------------------------------------
 MplusAutomation::plotLTA(lta_inv1)
 
-# 
-# 
-# ***
-# 
-# # References: (INCOMPLETE)
-# 
+# -----------------------------------------------------------------------------
+
+# References: (INCOMPLETE)
+
 # Hallquist, Michael N., and Joshua F. Wiley. 2018. “MplusAutomation: An R Package for FacilitatingLarge-Scale Latent Variable Analyses in Mplus.”Structural Equation Modeling, 1–18. https://doi.org/10.1080/10705511.2017.1402334.
-# 
+
 # Müller, Kirill. 2017.Here:  A Simpler Way to Find Your Files. https://CRAN.R-project.org/package=here.
-# 
+
 # R Core Team. 2019.R: A Language and Environment for Statistical Computing. Vienna, Austria: RFoundation for Statistical Computing. https://www.R-project.org/.
-# 
+
 # Wickham, Hadley, Romain François, Lionel Henry, and Kirill Müller. 2020. Dplyr:  A Grammar of DataManipulation. https://CRAN.R-project.org/package=dplyr.
-# 
+
 # Wickham, Hadley, Jim Hester, and Winston Chang. 2020. Devtools: Tools to Make Developing R PackagesEasier. https://CRAN.R-project.org/package=devtools.
-# 
+
 # Wickham, Hadley, Jim Hester, and Romain Francois. 2018. Readr: Read Rectangular Text Data. https://CRAN.R-project.org/package=readr.1
-# 
-# ***
+
+# -----------------------------------------------------------------------------

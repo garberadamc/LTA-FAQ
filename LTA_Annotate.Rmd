@@ -38,8 +38,14 @@ This approach relies on the utility of `R-Projects`. This provides a structured 
 
 Download Github repository here: \textcolor{blue}{https://github.com/garberadamc/LTA-FAQ}
 
-    For readers unfamiliar with Github and version controlled R-projects:
-    Within the repository site, click the green `Code` menu button and choose `Download ZIP`
+For readers **unfamiliar with Github** and version controlled R-projects:
+
+1. On the repository page, click the green `Code` button and in menu choose option `Download ZIP`
+2. Place the un-zipped downloaded folder on your desktop
+3. Within this folder open the file with the blue cube icon that is file type `____.Rproj`
+4. Next open the file containing all analysis code named `LTA_Annotate.R`.
+
+**Note:** Alternatively, if preferred users may follow analyses using the Rmarkdown script (`.Rmd`).
 
 ## Project folder organization: nested structure
 
@@ -100,11 +106,11 @@ lsay_data <- read_csv(here("data","lsay_lta_faq_2020.csv"),
                      na=c("9999","9999.00"))
 ```
 
-____________________________________
+***
 
 # Step 1: Enumeration
 
-____________________________________
+***
 
 ## Enumerate time point 1 (7th grade)
 ```{r}
@@ -115,7 +121,7 @@ ____________________________________
 t1_enum_k_16  <- lapply(1:6, function(k) { 
   enum_t1  <- mplusObject(                 
     
-# The 'glue' function inserts R code within {---} a string chunk.      
+# The 'glue' function inserts R code within a string or green text within quotes using the syntax {---}      
     TITLE = glue("Class-{k}_Time1"), 
   
     VARIABLE = glue( 
@@ -152,7 +158,7 @@ enum_t1_fit <- mplusModeler(enum_t1,
 
 ```
 
-____________________________________
+***
 
 ## Enumerate time point 2 (10th grade)
 ```{r}
@@ -193,11 +199,11 @@ enum_t2_fit <- mplusModeler(enum_t2,
 
 ```
 
-______________________________________________
+***
 
 ## Plot LCAs
 
-______________________________________________
+***
 
 Read models 
 ```{r, eval=TRUE}
@@ -247,7 +253,7 @@ ggplot(pd_long_t1, aes(as.integer(Var), value, shape = variable,
 ```
 
 ```{r}
-ggsave(here("figures", "T1_C4_LCA_plot.png"), dpi="retina", height=5, width=7, units="in")
+ggsave(here("figures", "T1_C4_LCA_plot.png"), dpi=300, height=5, width=7, units="in")
 ```
 
 Plot time 2 LCA
@@ -291,14 +297,14 @@ ggplot(pd_long_t2, aes(as.integer(Var), value, shape = variable,
 ```
 
 ```{r}
-ggsave(here("figures", "T2_C4_LCA_plot.png"), dpi="retina", height=5, width=7, units="in")
+ggsave(here("figures", "T2_C4_LCA_plot.png"), dpi=300, height=5, width=7, units="in")
 ```
 
-______________________________________________
+***
 
 # Step 2: Create model fit summary table 
 
-______________________________________________
+***
 
 Extract model fit data 
 ```{r, eval=TRUE}
@@ -397,15 +403,15 @@ allFit %>%
       groups = c("Time-1","Time-2"))
 ```
 
-____________________________________
+***
 
 # Step 3: Estimate Latent Transition Analysis
 
-____________________________________
+***
 
 ## Estimate non-invariant estimated LTA model
 
-____________________________________
+***
 
 ```{r}
 
@@ -464,15 +470,15 @@ lta_non_inv <- mplusObject(
 
 lta_non_inv_fit <- mplusModeler(lta_non_inv,
                      dataout=here("enum_LCA_time2", "lta.dat"),
-                     modelout=here("LTA_models", "4-Class-Non-Invariant.inp"),
+                     modelout=here("LTA_models", "4-class-non-invariant.inp"),
                      check=TRUE, run = TRUE, hashfilename = FALSE)
 ```
 
-____________________________________
+***
 
 ## Estimate invariant LTA model 
 
-____________________________________
+***
 
 ```{r}
 
@@ -531,7 +537,7 @@ lta_inv <- mplusObject(
 
 lta_inv_fit <- mplusModeler(lta_inv,
                  dataout=here("enum_LCA_time2", "lta.dat"),
-                 modelout=here("LTA_models", "4-Class-Invariant.inp"),
+                 modelout=here("LTA_models", "4-class-invariant.inp"),
                  check=TRUE, run = TRUE, hashfilename = FALSE)
 ```
 
@@ -543,13 +549,13 @@ Conduct Satorra-Bentler $\chi^2$ difference testing
 
 lta_models <- readModels(here("LTA_models"), quiet = TRUE)
 
-T1 <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
-T0 <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
-c1  <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
-c0  <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
-d1  <- lta_models[["X4.Class.Non.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
-d0  <- lta_models[["X4.Class.Invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
-df  <- abs(d0-d1)
+T1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
+T0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
+c1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+c0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+d1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
+d0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
+df <- abs(d0-d1)
 
 # Satora-Bentler scaled Difference test equations
 cd <- (((d0*c0)-(d1*c1))/(d0-d1))
@@ -564,7 +570,7 @@ p_diff <- pchisq(t, df, lower.tail=FALSE)
 
 ```
 
-**RESULT**: The Satorra-Bentler scaled $\chi^2$ difference test comparing the invariant and non-invariant LTA models was, $T (19) = 20.58, p = 1.0$.
+**RESULT**: The Satorra-Bentler scaled $\chi^2$ difference test comparing the invariant and non-invariant LTA models was, $T (19) = 20.05, p = .39$.
 
 ***
 
@@ -651,9 +657,6 @@ t_matrix %>%
 
 ```
 
-***
-
-# END COPY EDITING - ALL PLOTS CURRENTLY INCOMPLETE
 
 ***
 
@@ -664,7 +667,6 @@ t_matrix %>%
 ```{r, eval=TRUE}
 MplusAutomation::plotLTA(lta_inv1)
 ```
-
 
 ***
 
