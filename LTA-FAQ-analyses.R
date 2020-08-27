@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # ---
 # ---
-# title: "Appendix - LTA with MplusAutomation" 
+# title: "Appendix B - Implement LTA Analyses with MplusAutomation" 
 # ---
 # ---
 # -----------------------------------------------------------------------------
@@ -57,7 +57,7 @@
 
 # a. **Annotate in R:** The hashtag symbol `#` identifies comments written in R-language form. 
 
-# b. **Annotate in Mplus input:** Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (green text). To add comments the Mplus language convention is used (e.g., !!! annotate Mplus input !!!).
+# b. **Annotate in Mplus input:** Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (green text). To add comments within quotations the Mplus language convention is used (e.g., !!! annotate Mplus input !!!).
 
 # c. **Annotate context-specific syntax:** To signal to the user areas of the syntax which must be adapted to fit specific modeling contexts the text, `NOTE CHANGE:` is used. 
 

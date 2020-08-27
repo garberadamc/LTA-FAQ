@@ -1,5 +1,5 @@
 ---
-title: "Appendix - LTA with MplusAutomation"
+title: "Appendix B - Implement LTA Analyses with MplusAutomation"
 author: ""
 date: ""
 output:
@@ -71,7 +71,7 @@ when estimating models with `MplusAutomation`.
 In the following script, three types of comments are included in code blocks in which models are estimated using `MplusAutomation`. 
 
 a. **Annotate in R:** The hashtag symbol `#` identifies comments written in R-language form. 
-b. **Annotate in Mplus input:** Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (green text). To add comments the Mplus language convention is used (e.g., !!! annotate Mplus input !!!).
+b. **Annotate in Mplus input:** Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (green text). To add comments within quotations the Mplus language convention is used (e.g., !!! annotate Mplus input !!!).
 c. **Annotate context-specific syntax:** To signal to the user areas of the syntax which vary based on the particular modeling context the text, `NOTE CHANGE:` is used. 
 
 # --------------------------------------------------------------------------------------
@@ -99,9 +99,7 @@ library(cowplot)
 
 ```
 
-Read in LSAY data file 
-
-*Note:* The LSAY data file, `lsay_lta_faq_2020.csv`,  has been pre-processed.
+Read in LSAY data file, `lsay_lta_faq_2020.csv`.
 ```{r, eval=TRUE}
 
 lsay_data <- read_csv(here("data","lsay_lta_faq_2020.csv"),
@@ -391,8 +389,6 @@ allFit %>%
   gt() %>%
   tab_header(
     title = md("**Model Fit Summary Table**"), subtitle = md("&nbsp;")) %>% 
-    tab_source_note(
-    source_note = md("Data Source: **Longitudinal Study of American Youth.**")) %>%
   cols_label(
     Title = "Classes",
     Parameters = md("Par"),
@@ -578,12 +574,12 @@ Conduct Satorra-Bentler $\chi^2$ difference testing
 
 lta_models <- readModels(here("LTA_models"), quiet = TRUE)
 
-T0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]      # test stat. value
-T1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]  # test stat. value
-c0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]             # scaling factor
-c1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]         # scaling factor
-d0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]         # degrees of freedom
-d1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]     # degrees of freedom
+T0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]     
+T1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]] 
+c0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]            
+c1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]        
+d0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]        
+d1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]    
 df <- abs(d0-d1)
 
 # Satorra-Bentler scaled Difference test equations
