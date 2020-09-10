@@ -8,7 +8,7 @@
 
 # Rationale for MplusAutomation workflow: 
 
-# This R-script is intended to provide a template for running LTA and associated tasks in a systematic manner. Using this approach all code for data pre-processing, model estimation, tabulation, and figure processing can be contained within a single script providing clear documentation. It is the authors belief that this dramatically reduces risk of user-error, is conducive to open-science philosophy, and scientific transparency. All models are estimated using `Mplus` (Muthén & Muthén, 1998 - 2017) using the wrapping program `MplusAutomation` (Hallquist & Wiley, 2018). This method requires that the user to have the proprietary software `Mplus` installed on their OS. 
+# This R-script is intended to provide a template for running LTA and associated tasks in a systematic manner. Using this approach all code for data pre-processing, model estimation, tabulation, and figure processing can be contained within a single script providing clear documentation. It is the authors belief that this dramatically reduces risk of user-error, is conducive to open-science philosophy, and scientific transparency. All models are estimated using `Mplus` (Muthén & Muthén, 1998 - 2017) using the wrapping program `MplusAutomation` (Hallquist & Wiley, 2018). This method requires the user to have the proprietary software `Mplus` installed on their OS. 
 
 # This approach also relies on the utility of `R-Projects`. This provides a structured framework for organizing all associated data files, Mplus text files, scripts, and figures. Given the high output of Mplus files inherent to LTA modeling, creating a system of project sub-folders greatly improves organization (i.e., folders; 'data', 'mplus_files' 'figures', etc.) Additionally, the communication between R and Mplus requires the specification of file-paths a procedure which is streamlined by use of `R-projects`. Due to the reliance on file-paths the `here` package is utilized for reproducibility, by making all path syntax uniform across operating systems. 
 
@@ -22,8 +22,8 @@
 
 # Download the R-Project
 
-# Download Github repository here: https://github.com/garberadamc/LTA-FAQ
- 
+# Link to Github repository here: \textcolor{blue}{https://github.com/garberadamc/LTA-FAQ}
+
 # For readers **unfamiliar with Github** and version controlled R-projects:
 
 # 1. On the repository page, click the green `Code` button and in the menu choose option `Download ZIP`
@@ -33,33 +33,25 @@
 
 # **Note:** Alternatively, if preferred users may follow analyses using the Rmarkdown script (`.Rmd`).
 
-# -----------------------------------------------------------------------------
+# Project folder organization
 
-# Project folder organization: nested structure
-# 
 # The following sub-folders will be used to contain files:
-# 
-# 1. "data"
-# 2. "enum_LCA_time1"
-# 3. "enum_LCA_time2"
-# 4. "LTA_models"
-# 5. "figures"
-# 
-# Note regarding choice of project location:
-#
-# If the project folder is located within too many nested folders it may result in a file-path error
-# when estimating models with `MplusAutomation`. 
+
+#   1. "data"; 2. "enum_LCA_time1"; 3. "enum_LCA_time2"; 4. "LTA_models"; 5. "figures"
+
+# Note regarding  project location: If the main project folder is located within too many nested folders it may result in a file-path error when estimating models with `MplusAutomation`. 
 
 # -----------------------------------------------------------------------------
+
 # Notation guide
 
 # In the following script, three types of comments are included in code blocks in which models are estimated using `MplusAutomation`. 
 
-# a. **Annotate in R:** The hashtag symbol `#` identifies comments written in R-language form. 
+# a. Annotate in R: The hashtag symbol `#` identifies comments written in R-language form. 
 
-# b. **Annotate in Mplus input:** Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (green text). To add comments within quotations the Mplus language convention is used (e.g., !!! annotate Mplus input !!!).
+# b. Annotate in Mplus input: Within the `mplusObject()` function all text used to generate Mplus input files is enclosed within quotation marks (green text). To add comments within quotations the Mplus language convention is used (e.g., !!! annotate Mplus input !!!).
 
-# c. **Annotate context-specific syntax:** To signal to the user areas of the syntax which must be adapted to fit specific modeling contexts the text, `NOTE CHANGE:` is used. 
+# c. Annotate context-specific syntax: To signal to the user areas of the syntax which must be adapted to fit specific modeling contexts the text, `NOTE CHANGE:` is used. 
 
 # -----------------------------------------------------------------------------
 # To install package {`rhdf5`} 
@@ -79,22 +71,21 @@ library(here)
 library(glue)            
 library(janitor)            
 library(gt) 
-library(rhdf5)
 library(reshape2)
 library(cowplot)
+library(PNWColors)
+library(ggrepel)
 
 # -----------------------------------------------------------------------------
 
 # Read in LSAY data file 
-
-# *Note:* The LSAY data file, `lsay_lta_faq_2020.csv`, has been pre-processed.
 
 lsay_data <- read_csv(here("data","lsay_lta_faq_2020.csv"),
                      na=c("9999","9999.00"))
 
 # -----------------------------------------------------------------------------
 # 
-# Step 1: Enumeration
+# Enumeration
 # 
 # -----------------------------------------------------------------------------
 
@@ -142,7 +133,7 @@ t1_enum_k_16  <- lapply(1:6, function(k) {
                               check=TRUE, run = TRUE, hashfilename = FALSE)
 })
 
-# NOTE: Even after successfully estimating a series of models the `mplusModeler()` function will return error messages.
+# NOTE: It is highly recommended that you check the output (`.out`) files to check for convergence warnings or syntax errors. 
 
 # -----------------------------------------------------------------------------
 
@@ -184,116 +175,28 @@ t2_enum_k_16  <- lapply(1:6, function(k) {
                               check=TRUE, run = TRUE, hashfilename = FALSE)
 })
 
-# -----------------------------------------------------------------------------
-# Compare time 1 & time 2 LCA plots 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
-# Read models 
+# Create model fit summary table 
 
-# timepoint 1
+# --------------------------------------------------------------------------------------
+
+# Read all models for enumeration table 
 output_enum_t1 <- readModels(here("enum_LCA_time1"), quiet = TRUE)
-# timepoint 2
 output_enum_t2 <- readModels(here("enum_LCA_time2"), quiet = TRUE)
 
-# -----------------------------------------------------------------------------
-# Plot time 1 LCA
-
-# extract posterior probabilities 
-# NOTE CHANGE (below): chosen model (i.e.,'c4') is based on enumeration decision
-plot_t1 <- as.data.frame(output_enum_t1[["c4_lca_enum_time1.out"]]
-                           [["gh5"]][["means_and_variances_data"]]
-                           [["estimated_probs"]][["values"]]
-                           [seq(2, 10, 2),]) 
-# NOTE CHANGE (above): value '10' is determined by 2 times the number of items in LCA model
-
-# extract class size proportions
-c_size <- as.data.frame(output_enum_t1[["c4_lca_enum_time1.out"]]
-                        [["class_counts"]][["modelEstimated"]][["proportion"]])
-colnames(c_size) <- paste0("cs")
-c_size <- c_size %>% mutate(cs = round(cs*100, 2))
-
-#rename class and indicator names
-colnames(plot_t1) <- paste0("C", 1:4, glue(" ({c_size[1:4,]}%)"))
-plot_t1 <- cbind(Var = paste0("U", 1:5), plot_t1)
-
-plot_t1$Var <- factor(plot_t1$Var,
-               levels = c("U1","U2","U3","U4","U5"),
-               labels = c("Enjoy","Useful","Logical","Job","Adult"))
-
-#change data-frame from wide to long format
-pd_long_t1 <- melt(plot_t1, id.vars = "Var") 
-
-# plot data
-ggplot(pd_long_t1, aes(as.integer(Var), value, shape = variable, 
-                    colour = variable, lty = variable)) +
-  geom_point(size = 4) + geom_line() + 
-  scale_x_continuous("", breaks = 1:5, labels = plot_t1$Var) + 
-  scale_y_continuous("Probability") + 
-  scale_colour_grey() + 
-  theme_cowplot() +
-  theme(legend.title = element_blank(), 
-        legend.position = "top")
-
-ggsave(here("figures", "T1_C4_LCA_plot.png"), dpi=300, height=5, width=7, units="in")
-# -----------------------------------------------------------------------------
-
-# Plot time 2 LCA
-
-# extract posterior probabilities 
-plot_t2 <- as.data.frame(output_enum_t2[["c4_lca_enum_time2.out"]]
-                         [["gh5"]][["means_and_variances_data"]]
-                         [["estimated_probs"]][["values"]]
-                         [seq(2, 10, 2),]) #seq("from","to","by")
-
-# extract class size proportions
-c_size <- as.data.frame(output_enum_t2[["c4_lca_enum_time2.out"]]
-                        [["class_counts"]][["modelEstimated"]][["proportion"]])
-colnames(c_size) <- paste0("cs")
-c_size <- c_size %>% mutate(cs = round(cs*100, 2))
-
-#rename class and indicator names
-colnames(plot_t2) <- paste0("C", 1:4, glue(" ({c_size[1:4,]}%)"))
-plot_t2 <- cbind(Var = paste0("U", 1:5), plot_t1)
-
-plot_t2$Var <- factor(plot_t2$Var,
-               levels = c("U1","U2","U3","U4","U5"),
-               labels = c("Enjoy","Useful","Logical","Job","Adult"))
-
-#change data-frame from wide to long format
-pd_long_t2 <- melt(plot_t2, id.vars = "Var") 
-
-# plot data
-ggplot(pd_long_t2, aes(as.integer(Var), value, shape = variable, 
-                       colour = variable, lty = variable)) +
-  geom_point(size = 4) + geom_line() + 
-  scale_x_continuous("", breaks = 1:5, labels = plot_t2$Var) + 
-  scale_y_continuous("Probability") + 
-  # labs(title = "LCA Probability Plot") +
-  scale_colour_grey() + 
-  theme_cowplot() +
-  theme(legend.title = element_blank(), 
-        legend.position = "top")
-
-ggsave(here("figures", "T2_C4_LCA_plot.png"), dpi=300, height=5, width=7, units="in")
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# Step 2: Create model fit summary table 
-# -----------------------------------------------------------------------------
 
 # Extract model fit data 
 enum_extract1 <- LatexSummaryTable(output_enum_t1,                                 
-                keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC",
-                           "BLRT_PValue", "T11_VLMR_PValue","Observations"))   
+                                   keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC",
+                                              "BLRT_PValue", "T11_VLMR_PValue","Observations"))   
 
 enum_extract2 <- LatexSummaryTable(output_enum_t2,                                 
-                keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC",
-                           "BLRT_PValue", "T11_VLMR_PValue","Observations")) 
+                                   keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC",
+                                              "BLRT_PValue", "T11_VLMR_PValue","Observations")) 
 
-# -----------------------------------------------------------------------------
 # Calculate indices derived from the Log Likelihood (LL)
-# -----------------------------------------------------------------------------
-                           
+
 allFit1 <- enum_extract1 %>% 
   mutate(aBIC = -2*LL+Parameters*log((Observations+2)/24)) %>% 
   mutate(CIAC = -2*LL+Parameters*(log(Observations)+1)) %>% 
@@ -318,18 +221,15 @@ allFit2 <- enum_extract2 %>%
 
 allFit <- full_join(allFit1,allFit2)
 
+# --------------------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# Format table 
-# -----------------------------------------------------------------------------
+## Format fit table 
 
 allFit %>% 
   mutate(Title = str_remove(Title, "_Time*")) %>% 
   gt() %>%
   tab_header(
     title = md("**Model Fit Summary Table**"), subtitle = md("&nbsp;")) %>% 
-    tab_source_note(
-    source_note = md("Data Source: **Longitudinal Study of American Youth.**")) %>%
   cols_label(
     Title = "Classes",
     Parameters = md("Par"),
@@ -340,9 +240,11 @@ allFit %>%
     cmPk = md("*cmP_k*")) %>%
   tab_footnote(
     footnote = md(
-    "*Note.* Par = Parameters; *LL* = model log likelihood; BIC = Bayesian information criterion;
+      "*Note.* Par = Parameters; *LL* = model log likelihood;
+      BIC = Bayesian information criterion;
       aBIC = sample size adjusted BIC; CAIC = consistent Akaike information criterion;
-      AWE = approximate weight of evidence criterion; BLRT = bootstrapped likelihood ratio test p-value;
+      AWE = approximate weight of evidence criterion;
+      BLRT = bootstrapped likelihood ratio test p-value;
       VLMR = Vuong-Lo-Mendell-Rubin adjusted likelihood ratio test p-value;
       cmPk = approximate correct model probability."), 
     locations = cells_title()) %>% 
@@ -350,13 +252,17 @@ allFit %>%
   fmt_number(10,decimals = 2,
              drop_trailing_zeros=TRUE,
              suffixing = TRUE) %>% 
-  fmt_number(c(3:9,11),decimals = 2) %>% 
-  fmt_missing(1:11, missing_text = "--") %>% 
+  fmt_number(c(3:9,11), 
+             decimals = 2) %>% 
+  fmt_missing(1:11,
+              missing_text = "--") %>% 
   fmt(c(8:9,11),
-    fns = function(x) 
-    ifelse(x<0.001, "<.001", scales::number(x, accuracy = 0.01))) %>%
+      fns = function(x) 
+        ifelse(x<0.001, "<.001",
+               scales::number(x, accuracy = 0.01))) %>%
   fmt(10, fns = function(x) 
-    ifelse(x>100, ">100", scales::number(x, accuracy = .1))) %>%
+    ifelse(x>100, ">100",
+           scales::number(x, accuracy = .1))) %>%
   tab_row_group(
     group = "Time-1",
     rows = 1:6) %>%
@@ -364,12 +270,93 @@ allFit %>%
     group = "Time-2",
     rows = 7:12) %>% 
   row_group_order(
-      groups = c("Time-1","Time-2"))
+    groups = c("Time-1","Time-2")
+  )
+
+
+# --------------------------------------------------------------------------------------
+
+## Compare time 1 & time 2 LCA plots 
+
+# --------------------------------------------------------------------------------------
+
+# Read models for plotting (4-class models)
+
+model_t1_c4 <- readModels(here("enum_LCA_time1", "c4_lca_enum_time1.out"), quiet = TRUE)
+model_t2_c4 <- readModels(here("enum_LCA_time2", "c4_lca_enum_time2.out"), quiet = TRUE)
+
+
+### Create a function `plot_lca_function` that requires 5 arguments:
+
+# 1. `model_name`: name of Mplus model object (e.g., `model_t1_c4`)
+# 2. `item_num`: the number of items in LCA measurement model (e.g., `5`)
+# 3. `class_num`: the number of classes (*k*) in LCA model (e.g., `4`)
+# 4. `item_labels`: the item labels for x-axis (e.g., `c("Enjoy","Useful","Logical","Job","Adult")`)
+# 5. `plot_title`: include the title of the plot here (e.g., `"Time 1 LCA Posterior Probability Plot"`)
+
+# e.g., `plot_lca_function(model_name, item_num, class_num, item_labels, plot_title)`
+
+plot_lca_function <- function(model_name,item_num,class_num,item_labels,plot_title){
+  
+  mplus_model <- as.data.frame(model_name$gh5$means_and_variances_data$estimated_probs$values)
+  plot_t1 <- mplus_model[seq(2, 2*item_num, 2),]
+  
+  c_size <- as.data.frame(model_name$class_counts$modelEstimated$proportion)
+  colnames(c_size) <- paste0("cs")
+  c_size <- c_size %>% mutate(cs = round(cs*100, 2))
+  colnames(plot_t1) <- paste0("C", 1:class_num, glue(" ({c_size[1:class_num,]}%)"))
+  
+  plot_t1 <- cbind(Var = paste0("U", 1:item_num), plot_t1)
+  plot_t1$Var <- factor(plot_t1$Var,
+                        labels = item_labels)
+  plot_t1$Var <- fct_inorder(plot_t1$Var)
+  pd_long_t1 <- melt(plot_t1, id.vars = "Var") 
+  
+  p <- pd_long_t1 %>%
+    ggplot(aes(x = as.integer(Var), y = value,
+               shape = variable, colour = variable, lty = variable)) +
+    geom_point(size = 4) + geom_line() + 
+    scale_x_continuous("", breaks = 1:5, labels = plot_t1$Var) + 
+    scale_colour_grey() + 
+    labs(title = plot_title, y = "Probability") +
+    theme_cowplot() +
+    theme(legend.title = element_blank(), 
+          legend.position = "top")
+  
+  p
+  return(p)
+}
+
+### Plot time 1 LCA
+
+plot_lca_function(
+  model_name = model_t1_c4, 
+  item_num = 5,
+  class_num = 4,
+  item_labels = c("Enjoy","Useful","Logical","Job","Adult"),
+  plot_title = "Time 1 LCA Posterior Probability Plot"
+)
+
+ggsave(here("figures", "T1_C4_LCA_plot.png"), dpi=300, height=5, width=7, units="in")
+
+
+### Plot time 2 LCA
+
+plot_lca_function(
+  model_name = model_t2_c4,
+  item_num = 5,         
+  class_num = 4,
+  item_labels = c("Enjoy","Useful","Logical","Job","Adult"),
+  plot_title = "Time 2 LCA Posterior Probability Plot"
+)
+
+ggsave(here("figures", "T2_C4_LCA_plot.png"), dpi=300, height=5, width=7, units="in")
+
 
 # -----------------------------------------------------------------------------
-# # Step 3: Estimate Latent Transition Analysis
+# Estimate Latent Transition Analysis
 # -----------------------------------------------------------------------------
-# 
+
 # Estimate non-invariant estimated LTA model
 
 lta_non_inv <- mplusObject(
@@ -628,12 +615,8 @@ MplusAutomation::plotLTA(lta_inv1)
 
 # Muthen L.K., & Muthen B.O. (1998-2017) Mplus User's Guide. Eight Edition. Los Angelos, CA: Muthen & Muthen.
 
-# R Core Team. 2019.R: A Language and Environment for Statistical Computing. Vienna, Austria: RFoundation for Statistical Computing. https://www.R-project.org/.
+# R Core Team. 2019.R: A Language and Environment for Statistical Computing. Vienna, Austria: R Foundation for Statistical Computing. https://www.R-project.org/.
 
-# Wickham, Hadley, Romain François, Lionel Henry, and Kirill Müller. 2020. Dplyr:  A Grammar of DataManipulation. https://CRAN.R-project.org/package=dplyr.
-
-# Wickham, Hadley, Jim Hester, and Winston Chang. 2020. Devtools: Tools to Make Developing R PackagesEasier. https://CRAN.R-project.org/package=devtools.
-
-# Wickham, Hadley, Jim Hester, and Romain Francois. 2018. Readr: Read Rectangular Text Data. https://CRAN.R-project.org/package=readr.1
+# Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D. A., François, R., ... & Kuhn, M. (2019). Welcome to the Tidyverse. Journal of Open Source Software, 4(43), 1686.
 
 # -----------------------------------------------------------------------------
