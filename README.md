@@ -1,2 +1,3 @@
 # LTA-FAQ
-Temporary repository to test analysis code. 
+
+Repository associated with LTA-FAQ paper (currently in review). 
