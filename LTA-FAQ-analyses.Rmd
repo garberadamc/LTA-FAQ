@@ -52,7 +52,7 @@ For readers **unfamiliar with Github** and version controlled R-projects:
 3.  Within this folder open the file with the blue cube icon that is file type `LTA-FAQ.Rproj`
 4.  Next open the file containing all analysis code named `LTA-FAQ-analyses.R`.
 
-**Note:** Alternatively, if preferred users may follow analyses using the Rmarkdown script (`.Rmd`).
+**Note:** Users may also follow these analyses using the Rmarkdown script (`.Rmd`).
 
 ### Project folder organization
 
@@ -318,7 +318,7 @@ allFit %>%
 
 # --------------------------------------------------------------------------------------
 
-## Compare Time 1 & Time 2 LCA Plots
+## Compare Time 1 & Time 2 Condition Item Probability Plots
 
 # --------------------------------------------------------------------------------------
 
@@ -616,10 +616,9 @@ results <- readModels(filefilter = "sci_attitude")
 
 **Manual method to calculate transition probabilities:**
 
-Although possible to extract transition probabilities directly from the output the following code illustrates how the parameters are used to calculate each transition. This is useful for conducting advanced LTA model specifications such as making specific constraints within or between transition matrices, or testing the equivalence of specific transition probabilities.
+Although possible to extract transition probabilities directly from the output, the following code illustrates how the parameters are used to calculate each transition. This is useful for conducting advanced LTA model specifications such as making specific constraints within or between transition matrices, or testing the equivalence of specific transition probabilities.
 
 Read invariance model and extract parameters (intercepts and multinomial regression coefficients)
-
 ```{r, eval=TRUE}
 
 LTA_invar <- lta_models$LTA.invariant.out
@@ -664,11 +663,11 @@ t44 <- 1 - (t41 + t42 + t43)
 ```{r, eval=TRUE}
 
 t_matrix <- tibble(
-  "Time1" = c("C1=Anti-Science","C1=Amb. w/ Elevated","C1=Amb. w/ Minimal","C1=Pro-Science"),
-  "C2=Anti-Science" = c(t11,t21,t31,t41),
-  "C2=Amb. w/ Elevated" = c(t12,t22,t32,t42),
-  "C2=Amb. w/ Minimal" = c(t13,t23,t33,t43),
-  "C2=Pro-Science" = c(t14,t24,t34,t44))
+  "Time1" = c("Anti-Science","Amb. w/ Elevated","Amb. w/ Minimal","Pro-Science"),
+  "Anti-Science" = c(t11,t21,t31,t41),
+  "Amb. w/ Elevated" = c(t12,t22,t32,t42),
+  "Amb. w/ Minimal" = c(t13,t23,t33,t43),
+  "Pro-Science" = c(t14,t24,t34,t44))
 
 t_matrix %>% 
   gt(rowname_col = "Time1") %>%
@@ -679,13 +678,14 @@ t_matrix %>%
   fmt_number(2:5,decimals = 2) %>% 
   tab_spanner(label = "10th grade",columns = 2:5) %>% 
   tab_footnote(
-    footnote = md(
-    "*Note.* Transition matrix values are the identical to Table 5. However, Table 5 
-    has the values rearranged by class for interpretation purposes. Classes may be arranged
-    directly through Mplus syntax using start values."), 
-    locations = cells_title())
-
+    footnote = md("*Note.* Transition matrix values are identical to Table 5. However,
+    Table 5 has the values rearranged by class for interpretation purposes. Classes may be
+    arranged directly through Mplus syntax using start values."), 
+    locations = cells_title()
+    ) 
 ```
+
+\newpage
 
 # --------------------------------------------------------------------------------------
 
@@ -826,7 +826,7 @@ allFit %>%
     Title = "Model",
     Parameters = md("Par"),
     LL = md("*LL*"),
-    BIC = md("*BIC*"),
+    BIC = md("BIC"),
     aBIC = md("aBIC")) %>% 
   tab_footnote(
     footnote = md(
@@ -848,11 +848,11 @@ ri_lta_out <- RI_LTA[["class_counts"]][["transitionProbs"]][["probability"]] %>%
   as.data.frame(as.numeric())
 
 ri_t_matrix <- tibble(
-  "Time1" = c("C1=Anti-Science","C1=Amb. w/ Elevated","C1=Pro-Science","C1=Amb. w/ Minimal"),
-  "C2=Anti-Science" = c(ri_lta_out[1,1],ri_lta_out[2,1],ri_lta_out[3,1],ri_lta_out[4,1]),
-  "C2=Amb. w/ Elevated" = c(ri_lta_out[5,1],ri_lta_out[6,1],ri_lta_out[7,1],ri_lta_out[8,1]),
-  "C2=Pro-Science" = c(ri_lta_out[9,1],ri_lta_out[10,1],ri_lta_out[11,1],ri_lta_out[12,1]),
-  "C2=Amb. w/ Minimal" = c(ri_lta_out[13,1],ri_lta_out[14,1],ri_lta_out[15,1],ri_lta_out[16,1]))
+  "Time1" = c("Anti-Science","Amb. w/ Elevated","Pro-Science","Amb. w/ Minimal"),
+  "Anti-Science" = c(ri_lta_out[1,1],ri_lta_out[2,1],ri_lta_out[3,1],ri_lta_out[4,1]),
+  "Amb. w/ Elevated" = c(ri_lta_out[5,1],ri_lta_out[6,1],ri_lta_out[7,1],ri_lta_out[8,1]),
+  "Pro-Science" = c(ri_lta_out[9,1],ri_lta_out[10,1],ri_lta_out[11,1],ri_lta_out[12,1]),
+  "Amb. w/ Minimal" = c(ri_lta_out[13,1],ri_lta_out[14,1],ri_lta_out[15,1],ri_lta_out[16,1]))
 ```
 
 Create table
@@ -1002,16 +1002,16 @@ plot_transitions_function(
   model_name = lta_model,
   color_pallete = pnw_palette("Bay", n=4, type = "discrete"),
   facet_labels =c(
-    `1` = "Transitions to 10th Grade from the Pro-Science w/Elevated Utility Class",
-    `2` = "Transitions to 10th Grade from the Ambivalent w/Elevated Utility Class",
-    `3` = "Transitions to 10th Grade from the Ambivalent w/Minimal Utility Class",
-    `4` = "Transitions to 10th Grade from the Anti-Science w/Minimal Utility Class"),
+    `1` = "Transitions to 10th Grade from the Pro-Science w/ Elevated Utility Class",
+    `2` = "Transitions to 10th Grade from the Ambivalent w/ Elevated Utility Class",
+    `3` = "Transitions to 10th Grade from the Ambivalent w/ Minimal Utility Class",
+    `4` = "Transitions to 10th Grade from the Anti-Science w/ Minimal Utility Class"),
   timepoint_labels = c('1' = "7th Grade", '2' = "10th Grade"),
   class_labels = c(
-    "Pro-Science / Elev. Utility",
-    "Ambivalent / Elev. Utility",
-    "Ambivalent / Min. Utility",
-    "Anti-Science / Min. Utility")
+    "Pro-Science",
+    "Amb. / Elev. Utility",
+    "Amb. / Min. Utility",
+    "Anti-Science")
   )
 ```
 
