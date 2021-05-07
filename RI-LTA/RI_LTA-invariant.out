@@ -1,0 +1,931 @@
+Mplus VERSION 8.6
+MUTHEN & MUTHEN
+04/27/2021   2:17 PM
+
+INPUT INSTRUCTIONS
+
+  TITLE:
+  RI-LTA (Invariant)
+  DATA:
+  FILE = "ri_lta.dat";
+
+  VARIABLE:
+  NAMES = AB39M AB39T AB39U AB39W AB39X GA33A GA33H GA33I GA33K GA33L ENGINEER MATHG7
+       MATHG8 MATHG10 MATHG11 MATHG12 FEMALE KA9B KA9C KA9D KA9G KA9K CPROB11 CPROB12
+       CPROB13 CPROB14 CMOD1 CASENUM COHORT SOCISS2 OPKNOW2 SIOK2 CPROB21 CPROB22
+       CPROB23 CPROB24 CMOD2;
+   MISSING=.;
+   usev = ab39m ab39t ab39u ab39w ab39x  ! 7th grade indicators
+               ga33a ga33h ga33i ga33k ga33l; ! 10th grade indicators
+        categorical =AB39M AB39T AB39U AB39W AB39X
+                GA33A GA33H GA33I GA33K GA33L;
+        classes = c1(4) c2(4);
+  ANALYSIS:
+  type = mixture;
+        starts = 1000 250;
+        process = 16(starts);
+        algorithm = integration;
+  MODEL:
+  %overall%
+
+      f by AB39M - AB39X* (p1-p5)
+       GA33A - GA33L*    (p1-p5);
+       f@1; [f@0];
+
+          c2 on c1;
+
+          MODEL c1:
+          %c1#1%
+          [AB39M$1-AB39X$1] (1-5);
+
+          %c1#2%
+          [AB39M$1-AB39X$1] (6-10);
+
+          %c1#3%
+          [AB39M$1-AB39X$1] (11-15);
+
+          %c1#4%
+          [AB39M$1-AB39X$1] (16-20);
+
+          MODEL c2:
+          %c2#1%
+          [GA33A$1-GA33L$1] (1-5);
+
+          %c2#2%
+          [GA33A$1-GA33L$1] (6-10);
+
+          %c2#3%
+          [GA33A$1-GA33L$1] (11-15);
+
+          %c2#4%
+          [GA33A$1-GA33L$1] (16-20);
+  PLOT:
+  type = plot3;
+      series= AB39M-AB39X (*);
+
+
+
+*** WARNING
+  Data set contains cases with missing on all variables.
+  These cases were not included in the analysis.
+  Number of cases with missing on all variables:  31
+   1 WARNING(S) FOUND IN THE INPUT INSTRUCTIONS
+
+
+
+
+RI - LTA
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                        3061
+
+Number of dependent variables                                   10
+Number of independent variables                                  0
+Number of continuous latent variables                            1
+Number of categorical latent variables                           2
+
+Observed dependent variables
+
+  Binary and ordered categorical (ordinal)
+   AB39M       AB39T       AB39U       AB39W       AB39X       GA33A
+   GA33H       GA33I       GA33K       GA33L
+
+Continuous latent variables
+   F
+
+Categorical latent variables
+   C1          C2
+
+
+Estimator                                                      MLR
+Information matrix                                        OBSERVED
+Optimization Specifications for the Quasi-Newton Algorithm for
+Continuous Outcomes
+  Maximum number of iterations                                 100
+  Convergence criterion                                  0.100D-05
+Optimization Specifications for the EM Algorithm
+  Maximum number of iterations                                 500
+  Convergence criteria
+    Loglikelihood change                                 0.100D-02
+    Relative loglikelihood change                        0.100D-05
+    Derivative                                           0.100D-02
+Optimization Specifications for the M step of the EM Algorithm for
+Categorical Latent variables
+  Number of M step iterations                                    1
+  M step convergence criterion                           0.100D-02
+  Basis for M step termination                           ITERATION
+Optimization Specifications for the M step of the EM Algorithm for
+Censored, Binary or Ordered Categorical (Ordinal), Unordered
+Categorical (Nominal) and Count Outcomes
+  Number of M step iterations                                    1
+  M step convergence criterion                           0.100D-02
+  Basis for M step termination                           ITERATION
+  Maximum value for logit thresholds                            15
+  Minimum value for logit thresholds                           -15
+  Minimum expected cell size for chi-square              0.100D-01
+Maximum number of iterations for H1                           2000
+Convergence criterion for H1                             0.100D-03
+Optimization algorithm                                         EMA
+Integration Specifications
+  Type                                                    STANDARD
+  Number of integration points                                  15
+  Dimensions of numerical integration                            1
+  Adaptive quadrature                                           ON
+Random Starts Specifications
+  Number of initial stage random starts                       1000
+  Number of final stage optimizations                          250
+  Number of initial stage iterations                            10
+  Initial stage convergence criterion                    0.100D+01
+  Random starts scale                                    0.500D+01
+  Random seed for generating random starts                       0
+Parameterization                                             LOGIT
+Link                                                         LOGIT
+Cholesky                                                        ON
+
+Input data file(s)
+  ri_lta.dat
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of missing data patterns            45
+     Number of y missing data patterns           0
+     Number of u missing data patterns          45
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+
+     PROPORTION OF DATA PRESENT FOR U
+
+
+           Covariance Coverage
+              AB39M         AB39T         AB39U         AB39W         AB39X
+              ________      ________      ________      ________      ________
+ AB39M          0.994
+ AB39T          0.972         0.976
+ AB39U          0.972         0.960         0.977
+ AB39W          0.979         0.965         0.966         0.984
+ AB39X          0.989         0.973         0.975         0.982         0.994
+ GA33A          0.721         0.707         0.708         0.714         0.721
+ GA33H          0.717         0.702         0.704         0.709         0.717
+ GA33I          0.716         0.701         0.703         0.709         0.716
+ GA33K          0.717         0.703         0.705         0.710         0.717
+ GA33L          0.721         0.707         0.709         0.714         0.721
+
+
+           Covariance Coverage
+              GA33A         GA33H         GA33I         GA33K         GA33L
+              ________      ________      ________      ________      ________
+ GA33A          0.725
+ GA33H          0.718         0.720
+ GA33I          0.718         0.714         0.720
+ GA33K          0.719         0.715         0.714         0.721
+ GA33L          0.723         0.718         0.718         0.719         0.725
+
+
+UNIVARIATE PROPORTIONS AND COUNTS FOR CATEGORICAL VARIABLES
+
+    AB39M
+      Category 1    0.387         1177.000
+      Category 2    0.613         1865.000
+    AB39T
+      Category 1    0.596         1782.000
+      Category 2    0.404         1206.000
+    AB39U
+      Category 1    0.508         1519.000
+      Category 2    0.492         1473.000
+    AB39W
+      Category 1    0.596         1796.000
+      Category 2    0.404         1216.000
+    AB39X
+      Category 1    0.539         1639.000
+      Category 2    0.461         1404.000
+    GA33A
+      Category 1    0.424          941.000
+      Category 2    0.576         1278.000
+    GA33H
+      Category 1    0.572         1261.000
+      Category 2    0.428          944.000
+    GA33I
+      Category 1    0.491         1082.000
+      Category 2    0.509         1121.000
+    GA33K
+      Category 1    0.579         1277.000
+      Category 2    0.421          930.000
+    GA33L
+      Category 1    0.584         1297.000
+      Category 2    0.416          922.000
+
+
+RANDOM STARTS RESULTS RANKED FROM THE BEST TO THE WORST LOGLIKELIHOOD VALUES
+
+Final stage loglikelihood values at local maxima, seeds, and initial stage start numbers:
+
+          -14442.018  113138           585
+          -14442.018  244349           736
+          -14442.019  856612           700
+          -14442.019  802928           892
+          -14442.019  301717           823
+          -14442.020  484687           306
+          -14442.020  610181           711
+          -14442.020  871851           257
+          -14442.021  648555           113
+          -14442.022  461687           833
+          -14442.022  407168           44
+          -14442.025  411615           171
+          -14442.082  3607             873
+          -14442.088  278661           674
+          -14442.093  831410           567
+          -14442.105  723775           97
+          -14442.147  327927           908
+          -14443.237  533738           11
+          -14443.237  407108           366
+          -14443.237  195353           225
+          -14443.237  668003           647
+          -14443.237  736574           414
+          -14443.237  21345            199
+          -14443.237  17359            227
+          -14443.237  53621            483
+          -14443.237  284716           713
+          -14443.269  298553           773
+          -14444.106  836515           341
+          -14444.198  370466           41
+          -14445.399  423661           875
+          -14454.328  758647           951
+
+219 perturbed starting value run(s) did not converge or were rejected in the third stage.
+
+
+
+THE BEST LOGLIKELIHOOD VALUE HAS BEEN REPLICATED.  RERUN WITH AT LEAST TWICE THE
+RANDOM STARTS TO CHECK THAT THE BEST LOGLIKELIHOOD IS STILL OBTAINED AND REPLICATED.
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+
+
+MODEL FIT INFORMATION
+
+Number of Free Parameters                       40
+
+Loglikelihood
+
+          H0 Value                      -14442.018
+          H0 Scaling Correction Factor      1.1850
+            for MLR
+
+Information Criteria
+
+          Akaike (AIC)                   28964.035
+          Bayesian (BIC)                 29205.095
+          Sample-Size Adjusted BIC       29077.999
+            (n* = (n + 2) / 24)
+
+Chi-Square Test of Model Fit for the Binary and Ordered Categorical
+(Ordinal) Outcomes**
+
+          Pearson Chi-Square
+
+          Value                           1036.986
+          Degrees of Freedom                   959
+          P-Value                           0.0401
+
+          Likelihood Ratio Chi-Square
+
+          Value                            944.370
+          Degrees of Freedom                   959
+          P-Value                           0.6257
+
+** Of the 10008 cells in the latent class indicator table, 24
+   were deleted in the calculation of chi-square due to extreme values.
+
+Chi-Square Test for MCAR under the Unrestricted Latent Class Indicator Model
+
+          Pearson Chi-Square
+
+          Value                           2729.253
+          Degrees of Freedom                  8940
+          P-Value                           1.0000
+
+          Likelihood Ratio Chi-Square
+
+          Value                            830.152
+          Degrees of Freedom                  8940
+          P-Value                           1.0000
+
+
+
+FINAL CLASS COUNTS AND PROPORTIONS FOR EACH LATENT CLASS VARIABLE
+BASED ON THE ESTIMATED MODEL
+
+  Latent Class
+    Variable    Class
+
+    C1             1       846.97302          0.27670
+                   2       881.03577          0.28783
+                   3       797.91718          0.26067
+                   4       535.07404          0.17480
+    C2             1      1025.40991          0.33499
+                   2       463.46259          0.15141
+                   3       985.91754          0.32209
+                   4       586.21002          0.19151
+
+
+CLASSIFICATION QUALITY
+
+     Entropy                         0.560
+
+
+LATENT CLASS INDICATOR MEANS AND PROBABILITIES FOR EACH LATENT CLASS
+
+     MEAN/PROBABILITY PROFILES FOR C1
+                       Latent class
+                     1      2      3      4
+     AB39M
+       Category 1  0.703  0.341  0.123  0.425
+       Category 2  0.297  0.659  0.877  0.575
+     AB39T
+       Category 1  0.996  0.698  0.055  0.601
+       Category 2  0.004  0.302  0.945  0.399
+     AB39U
+       Category 1  0.954  0.566  0.060  0.359
+       Category 2  0.046  0.434  0.940  0.641
+     AB39W
+       Category 1  0.945  0.552  0.093  0.826
+       Category 2  0.055  0.448  0.907  0.174
+     AB39X
+       Category 1  0.987  0.272  0.078  0.965
+       Category 2  0.013  0.728  0.922  0.035
+
+     MEAN/PROBABILITY PROFILES FOR C2
+                       Latent class
+                     1      2      3      4
+     GA33A
+       Category 1  0.703  0.341  0.123  0.425
+       Category 2  0.297  0.659  0.877  0.575
+     GA33H
+       Category 1  0.996  0.698  0.055  0.601
+       Category 2  0.004  0.302  0.945  0.399
+     GA33I
+       Category 1  0.954  0.566  0.060  0.359
+       Category 2  0.046  0.434  0.940  0.641
+     GA33K
+       Category 1  0.945  0.552  0.093  0.826
+       Category 2  0.055  0.448  0.907  0.174
+     GA33L
+       Category 1  0.987  0.272  0.078  0.965
+       Category 2  0.013  0.728  0.922  0.035
+
+
+LATENT TRANSITION PROBABILITIES BASED ON THE ESTIMATED MODEL
+
+  C1 Classes (Rows) by C2 Classes (Columns)
+
+            1        2        3        4
+
+   1     0.538    0.098    0.183    0.180
+   2     0.242    0.246    0.328    0.184
+   3     0.214    0.142    0.509    0.135
+   4     0.347    0.094    0.253    0.306
+
+
+TRANSITION PROBABILITY ODDS
+
+     TRANSITION TABLE ODDS AND 95% CONFIDENCE INTERVALS FOR C1 TO C2
+        1.000(1.000,1.000)   0.183(0.077,0.434)   0.341(0.233,0.499)   0.335(0.076,1.481)
+        0.984(0.506,1.913)   1.000(1.000,1.000)   1.333(0.809,2.196)   0.748(0.172,3.253)
+        0.420(0.269,0.655)   0.279(0.142,0.547)   1.000(1.000,1.000)   0.265(0.092,0.764)
+        1.135(0.522,2.468)   0.307(0.021,4.586)   0.828(0.408,1.679)   1.000(1.000,1.000)
+
+
+C-SPECIFIC CLASSIFICATION RESULTS
+
+Classification Quality for C1
+
+     Entropy                         0.607
+
+Average Latent Class Probabilities for Most Likely Latent Class Membership (Row)
+by Latent Class (Column)
+
+           1        2        3        4
+
+    1   0.798    0.087    0.001    0.114
+    2   0.035    0.802    0.110    0.052
+    3   0.001    0.125    0.845    0.028
+    4   0.076    0.194    0.028    0.703
+
+
+Classification Probabilities for the Most Likely Latent Class Membership (Column)
+by Latent Class (Row)
+
+           1        2        3        4
+
+    1   0.922    0.031    0.001    0.046
+    2   0.097    0.672    0.118    0.113
+    3   0.001    0.102    0.879    0.018
+    4   0.209    0.072    0.044    0.675
+
+
+Logits for the Classification Probabilities for the Most Likely Latent Class Membership (Column)
+by Latent Class (Row)
+
+              1        2        3        4
+
+    1      3.001   -0.398   -4.042    0.000
+    2     -0.158    1.780    0.042    0.000
+    3     -3.352    1.749    3.901    0.000
+    4     -1.171   -2.241   -2.731    0.000
+
+Classification Quality for C2
+
+     Entropy                         0.503
+
+Average Latent Class Probabilities for Most Likely Latent Class Membership (Row)
+by Latent Class (Column)
+
+           1        2        3        4
+
+    1   0.708    0.070    0.076    0.145
+    2   0.044    0.792    0.117    0.047
+    3   0.084    0.121    0.718    0.078
+    4   0.094    0.115    0.037    0.753
+
+
+Classification Probabilities for the Most Likely Latent Class Membership (Column)
+by Latent Class (Row)
+
+           1        2        3        4
+
+    1   0.856    0.010    0.097    0.037
+    2   0.188    0.403    0.308    0.100
+    3   0.096    0.028    0.861    0.015
+    4   0.307    0.019    0.157    0.518
+
+
+Logits for the Classification Probabilities for the Most Likely Latent Class Membership (Column)
+by Latent Class (Row)
+
+              1        2        3        4
+
+    1      3.138   -1.307    0.958    0.000
+    2      0.630    1.392    1.124    0.000
+    3      1.837    0.610    4.035    0.000
+    4     -0.524   -3.303   -1.195    0.000
+
+
+MODEL RESULTS
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+Parameters in the Overall Part of the Model (Parameters Equal in All of the Classes)
+
+ F        BY
+    AB39M             -0.971      0.139     -7.003      0.000
+    AB39T             -0.126      0.275     -0.457      0.648
+    AB39U             -0.489      0.319     -1.536      0.125
+    AB39W             -0.225      0.281     -0.799      0.424
+    AB39X             -0.722      0.453     -1.594      0.111
+    GA33A             -0.971      0.139     -7.003      0.000
+    GA33H             -0.126      0.275     -0.457      0.648
+    GA33I             -0.489      0.319     -1.536      0.125
+    GA33K             -0.225      0.281     -0.799      0.424
+    GA33L             -0.722      0.453     -1.594      0.111
+
+ Means
+    F                  0.000      0.000    999.000    999.000
+
+ Variances
+    F                  1.000      0.000    999.000    999.000
+
+Parameters for Class-specific Model Parts of C1
+
+Latent Class C1#1
+
+ Thresholds
+    AB39M$1            1.025      0.166      6.186      0.000
+    AB39T$1            5.555     16.230      0.342      0.732
+    AB39U$1            3.131      1.255      2.494      0.013
+    AB39W$1            2.858      0.240     11.885      0.000
+    AB39X$1            4.561      1.048      4.353      0.000
+
+Latent Class C1#2
+
+ Thresholds
+    AB39M$1           -0.787      0.205     -3.842      0.000
+    AB39T$1            0.842      0.195      4.323      0.000
+    AB39U$1            0.280      0.321      0.870      0.384
+    AB39W$1            0.213      0.196      1.085      0.278
+    AB39X$1           -1.093      0.996     -1.098      0.272
+
+Latent Class C1#3
+
+ Thresholds
+    AB39M$1           -2.290      0.152    -15.075      0.000
+    AB39T$1           -2.858      0.632     -4.523      0.000
+    AB39U$1           -2.852      0.264    -10.807      0.000
+    AB39W$1           -2.299      0.252     -9.139      0.000
+    AB39X$1           -2.687      0.322     -8.334      0.000
+
+Latent Class C1#4
+
+ Thresholds
+    AB39M$1           -0.361      0.426     -0.849      0.396
+    AB39T$1            0.409      0.379      1.080      0.280
+    AB39U$1           -0.611      1.090     -0.561      0.575
+    AB39W$1            1.571      0.397      3.957      0.000
+    AB39X$1            3.557      4.090      0.870      0.385
+
+Parameters for Class-specific Model Parts of C2
+
+Latent Class C2#1
+
+ Thresholds
+    GA33A$1            1.025      0.166      6.186      0.000
+    GA33H$1            5.555     16.230      0.342      0.732
+    GA33I$1            3.131      1.255      2.494      0.013
+    GA33K$1            2.858      0.240     11.885      0.000
+    GA33L$1            4.561      1.048      4.353      0.000
+
+Latent Class C2#2
+
+ Thresholds
+    GA33A$1           -0.787      0.205     -3.842      0.000
+    GA33H$1            0.842      0.195      4.323      0.000
+    GA33I$1            0.280      0.321      0.870      0.384
+    GA33K$1            0.213      0.196      1.085      0.278
+    GA33L$1           -1.093      0.996     -1.098      0.272
+
+Latent Class C2#3
+
+ Thresholds
+    GA33A$1           -2.290      0.152    -15.075      0.000
+    GA33H$1           -2.858      0.632     -4.523      0.000
+    GA33I$1           -2.852      0.264    -10.807      0.000
+    GA33K$1           -2.299      0.252     -9.139      0.000
+    GA33L$1           -2.687      0.322     -8.334      0.000
+
+Latent Class C2#4
+
+ Thresholds
+    GA33A$1           -0.361      0.426     -0.849      0.396
+    GA33H$1            0.409      0.379      1.080      0.280
+    GA33I$1           -0.611      1.090     -0.561      0.575
+    GA33K$1            1.571      0.397      3.957      0.000
+    GA33L$1            3.557      4.090      0.870      0.385
+
+Categorical Latent Variables
+
+ C2#1     ON
+    C1#1               0.967      0.899      1.076      0.282
+    C1#2               0.147      1.032      0.143      0.886
+    C1#3               0.333      0.833      0.399      0.690
+
+ C2#2     ON
+    C1#1               0.576      2.028      0.284      0.777
+    C1#2               1.472      1.992      0.739      0.460
+    C1#3               1.230      1.872      0.657      0.511
+
+ C2#3     ON
+    C1#1               0.206      0.851      0.242      0.809
+    C1#2               0.767      0.830      0.924      0.356
+    C1#3               1.516      0.741      2.045      0.041
+
+ Means
+    C1#1               0.459      0.674      0.681      0.496
+    C1#2               0.499      0.680      0.733      0.464
+    C1#3               0.400      0.560      0.713      0.476
+    C2#1               0.127      0.396      0.320      0.749
+    C2#2              -1.181      1.380     -0.856      0.392
+    C2#3              -0.189      0.361     -0.524      0.600
+
+
+QUALITY OF NUMERICAL RESULTS
+
+     Condition Number for the Information Matrix              0.205E-04
+       (ratio of smallest to largest eigenvalue)
+
+
+RESULTS IN PROBABILITY SCALE
+
+                    Estimate
+
+Results for Class-specific Model Parts of C1
+
+Latent Class C1#1
+
+ AB39M
+    Category 1         0.703
+    Category 2         0.297
+ AB39T
+    Category 1         0.996
+    Category 2         0.004
+ AB39U
+    Category 1         0.954
+    Category 2         0.046
+ AB39W
+    Category 1         0.945
+    Category 2         0.055
+ AB39X
+    Category 1         0.987
+    Category 2         0.013
+
+Latent Class C1#2
+
+ AB39M
+    Category 1         0.341
+    Category 2         0.659
+ AB39T
+    Category 1         0.698
+    Category 2         0.302
+ AB39U
+    Category 1         0.566
+    Category 2         0.434
+ AB39W
+    Category 1         0.552
+    Category 2         0.448
+ AB39X
+    Category 1         0.272
+    Category 2         0.728
+
+Latent Class C1#3
+
+ AB39M
+    Category 1         0.123
+    Category 2         0.877
+ AB39T
+    Category 1         0.055
+    Category 2         0.945
+ AB39U
+    Category 1         0.060
+    Category 2         0.940
+ AB39W
+    Category 1         0.093
+    Category 2         0.907
+ AB39X
+    Category 1         0.078
+    Category 2         0.922
+
+Latent Class C1#4
+
+ AB39M
+    Category 1         0.425
+    Category 2         0.575
+ AB39T
+    Category 1         0.601
+    Category 2         0.399
+ AB39U
+    Category 1         0.359
+    Category 2         0.641
+ AB39W
+    Category 1         0.826
+    Category 2         0.174
+ AB39X
+    Category 1         0.965
+    Category 2         0.035
+
+Results for Class-specific Model Parts of C2
+
+Latent Class C2#1
+
+ GA33A
+    Category 1         0.703
+    Category 2         0.297
+ GA33H
+    Category 1         0.996
+    Category 2         0.004
+ GA33I
+    Category 1         0.954
+    Category 2         0.046
+ GA33K
+    Category 1         0.945
+    Category 2         0.055
+ GA33L
+    Category 1         0.987
+    Category 2         0.013
+
+Latent Class C2#2
+
+ GA33A
+    Category 1         0.341
+    Category 2         0.659
+ GA33H
+    Category 1         0.698
+    Category 2         0.302
+ GA33I
+    Category 1         0.566
+    Category 2         0.434
+ GA33K
+    Category 1         0.552
+    Category 2         0.448
+ GA33L
+    Category 1         0.272
+    Category 2         0.728
+
+Latent Class C2#3
+
+ GA33A
+    Category 1         0.123
+    Category 2         0.877
+ GA33H
+    Category 1         0.055
+    Category 2         0.945
+ GA33I
+    Category 1         0.060
+    Category 2         0.940
+ GA33K
+    Category 1         0.093
+    Category 2         0.907
+ GA33L
+    Category 1         0.078
+    Category 2         0.922
+
+Latent Class C2#4
+
+ GA33A
+    Category 1         0.425
+    Category 2         0.575
+ GA33H
+    Category 1         0.601
+    Category 2         0.399
+ GA33I
+    Category 1         0.359
+    Category 2         0.641
+ GA33K
+    Category 1         0.826
+    Category 2         0.174
+ GA33L
+    Category 1         0.965
+    Category 2         0.035
+
+
+IRT PARAMETERIZATION
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+Parameters in the Overall Part of the Model (Parameters Equal in All of the Classes)
+
+ Item Discriminations
+
+ F        BY
+    AB39M             -0.971      0.139     -7.003      0.000
+    AB39T             -0.126      0.275     -0.457      0.648
+    AB39U             -0.489      0.319     -1.536      0.125
+    AB39W             -0.225      0.281     -0.799      0.424
+    AB39X             -0.722      0.453     -1.594      0.111
+    GA33A             -0.971      0.139     -7.003      0.000
+    GA33H             -0.126      0.275     -0.457      0.648
+    GA33I             -0.489      0.319     -1.536      0.125
+    GA33K             -0.225      0.281     -0.799      0.424
+    GA33L             -0.722      0.453     -1.594      0.111
+
+ Means
+    F                  0.000      0.000      0.000      1.000
+
+ Variances
+    F                  1.000      0.000      0.000      1.000
+
+Parameters for Class-specific Model Parts of C1
+
+Latent Class C1#1
+
+ Item Difficulties
+    AB39M             -1.055      0.237     -4.456      0.000
+    AB39T            -44.153    181.654     -0.243      0.808
+    AB39U             -6.399      4.865     -1.315      0.188
+    AB39W            -12.725     16.208     -0.785      0.432
+    AB39X             -6.317      4.014     -1.574      0.116
+
+Latent Class C1#2
+
+ Item Difficulties
+    AB39M              0.810      0.242      3.350      0.001
+    AB39T             -6.695     14.811     -0.452      0.651
+    AB39U             -0.572      0.824     -0.694      0.488
+    AB39W             -0.948      1.616     -0.587      0.557
+    AB39X              1.514      1.525      0.993      0.321
+
+Latent Class C1#3
+
+ Item Difficulties
+    AB39M              2.358      0.319      7.389      0.000
+    AB39T             22.715     50.026      0.454      0.650
+    AB39U              5.829      3.615      1.612      0.107
+    AB39W             10.235     12.621      0.811      0.417
+    AB39X              3.721      2.031      1.832      0.067
+
+Latent Class C1#4
+
+ Item Difficulties
+    AB39M              0.372      0.421      0.884      0.376
+    AB39T             -3.253      7.489     -0.434      0.664
+    AB39U              1.249      2.642      0.473      0.637
+    AB39W             -6.997      9.185     -0.762      0.446
+    AB39X             -4.926      7.533     -0.654      0.513
+
+Parameters for Class-specific Model Parts of C2
+
+Latent Class C2#1
+
+ Item Difficulties
+    GA33A             -1.055      0.237     -4.456      0.000
+    GA33H            -44.153    181.654     -0.243      0.808
+    GA33I             -6.399      4.865     -1.315      0.188
+    GA33K            -12.725     16.208     -0.785      0.432
+    GA33L             -6.317      4.014     -1.574      0.116
+
+Latent Class C2#2
+
+ Item Difficulties
+    GA33A              0.810      0.242      3.350      0.001
+    GA33H             -6.695     14.811     -0.452      0.651
+    GA33I             -0.572      0.824     -0.694      0.488
+    GA33K             -0.948      1.616     -0.587      0.557
+    GA33L              1.514      1.525      0.993      0.321
+
+Latent Class C2#3
+
+ Item Difficulties
+    GA33A              2.358      0.319      7.389      0.000
+    GA33H             22.715     50.026      0.454      0.650
+    GA33I              5.829      3.615      1.612      0.107
+    GA33K             10.235     12.621      0.811      0.417
+    GA33L              3.721      2.031      1.832      0.067
+
+Latent Class C2#4
+
+ Item Difficulties
+    GA33A              0.372      0.421      0.884      0.376
+    GA33H             -3.253      7.489     -0.434      0.664
+    GA33I              1.249      2.642      0.473      0.637
+    GA33K             -6.997      9.185     -0.762      0.446
+    GA33L             -4.926      7.533     -0.654      0.513
+
+
+SAMPLE STATISTICS FOR ESTIMATED FACTOR SCORES
+
+
+     SAMPLE STATISTICS
+
+
+           Means
+              F             C_F
+              ________      ________
+                0.000        -0.035
+
+
+           Covariances
+              F             C_F
+              ________      ________
+ F              0.184
+ C_F            0.187         0.215
+
+
+           Correlations
+              F             C_F
+              ________      ________
+ F              1.000
+ C_F            0.940         1.000
+
+
+PLOT INFORMATION
+
+The following plots are available:
+
+  Histograms (sample values, estimated factor scores, estimated values, residuals)
+  Scatterplots (sample values, estimated factor scores, estimated values, residuals)
+  Sample proportions and estimated probabilities
+  Item characteristic curves
+  Information curves
+  Latent variable distribution plots
+
+DIAGRAM INFORMATION
+
+  Mplus diagrams are currently not available for Mixture analysis.
+  No diagram output was produced.
+
+
+     Beginning Time:  14:17:12
+        Ending Time:  14:20:56
+       Elapsed Time:  00:03:44
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2021 Muthen & Muthen

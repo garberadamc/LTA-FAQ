@@ -80,7 +80,7 @@ library(ggrepel)
 
 # Read in LSAY data file 
 
-lsay_data <- read_csv(here("data","lsay_lta_faq_2020.csv"),
+lsay_data <- read_csv(here("data","lsay_lta_faq_2021.csv"),
                      na=c("9999","9999.00"))
 
 # -----------------------------------------------------------------------------
@@ -133,7 +133,8 @@ t1_enum_k_16  <- lapply(1:6, function(k) {
                               check=TRUE, run = TRUE, hashfilename = FALSE)
 })
 
-# NOTE: It is highly recommended that you check the output (`.out`) files to check for convergence warnings or syntax errors. 
+# **NOTE:** It is highly recommended that you check the Mplus output files (`.out`) to check for convergence warnings or syntax errors. 
+# Mplus files may be viewed in the `RStudio` window (bottom right pane).
 
 # -----------------------------------------------------------------------------
 
@@ -486,33 +487,39 @@ lta_inv_fit <- mplusModeler(lta_inv,
 # - non-invariant (comparison): This model has **more** parameters. 
 # - invariant (nested): This model has **less** parameters. 
 
-# *0 = null or nested model & *1 = comparison  or parent model
-
 lta_models <- readModels(here("LTA_models"), quiet = TRUE)
 
-T0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
-T1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_Value"]]
+# *0 = null or nested model & *1 = comparison or parent model
 
-c0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
-c1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+# Log Likelihood Values
+L0 <- lta_models[["LTA.invariant.out"]][["summaries"]][["LL"]]
+L1 <- lta_models[["LTA.non.invariant.out"]][["summaries"]][["LL"]] 
 
-d0 <- lta_models[["X4.class.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
-d1 <- lta_models[["X4.class.non.invariant.out"]][["summaries"]][["ChiSqCategoricalLRT_DF"]]
+# LRT equation
+lr <- -2*(L0-L1) 
 
-df <- abs(d0-d1)
+# Parameters
+p0 <- lta_models[["LTA.invariant.out"]][["summaries"]][["Parameters"]] 
+p1 <- lta_models[["LTA.non.invariant.out"]][["summaries"]][["Parameters"]]
 
-# Satora-Bentler scaled Difference test equations
-cd <- (((d0*c0)-(d1*c1))/(d0-d1))
-t  <- (((T0*c0)-(T1*c1))/(cd))
+# Scaling Correction Factors
+c0 <- lta_models[["LTA.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+c1 <- lta_models[["LTA.non.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
 
-# Chi-square and degrees of freedom
-t
-df
+# Difference Test Scaling correction
+cd <- ((p0*c0)-(p1*c1))/(p0-p1)
+
+# Chi-square difference test(TRd)
+TRd <- (lr)/(cd)
+
+# Degrees of freedom
+df <- abs(p0 - p1)
+
 
 # Significance test
-(p_diff <- pchisq(t, df, lower.tail=FALSE))
+(p_diff <- pchisq(TRd, df, lower.tail=FALSE))
 
-# **RESULT**: The Satorra-Bentler scaled $\chi^2$ difference test comparing the invariant and non-invariant LTA models was, $T (19) = 20.05, p = .39$.
+# **RESULT**: The Log Likelihood $\chi^2$ difference test comparing the invariant and non-invariant LTA models was, $\chi^2 (20) = 18.23, p = .572$. See Reference Here: http://www.statmodel.com/chidiff.shtml
 
 # -----------------------------------------------------------------------------
 # Alternate, less verbose way to run LTA with the `createMixtures` function.
@@ -536,20 +543,20 @@ df
  results <- readModels(filefilter = "sci_attitude")
 
 # -----------------------------------------------------------------------------
-# Read invariance model and extract parameters (intercepts and multinomial regression coefficients) 
-# -----------------------------------------------------------------------------
-
-lta_inv1 <- readModels(here("LTA_models","4-Class-Invariant.out" ), quiet = TRUE)
-
-par <- as_tibble(lta_inv1[["parameters"]][["unstandardized"]]) %>% 
-  select(1:3) %>% 
-  filter(grepl('ON|Means', paramHeader)) %>% 
-  mutate(est = as.numeric(est))
-
-# -----------------------------------------------------------------------------
 # Manual method to calculate transition probabilities:
   
 # Although possible to extract transition probabilities directly from the output the following code illustrates how the parameters are used to calculate each transition. This is useful for conducting advanced LTA model specifications such as making specific constraints within or between transition matrices. 
+ 
+# -----------------------------------------------------------------------------
+# Read invariance model and extract parameters (intercepts and multinomial regression coefficients) 
+# -----------------------------------------------------------------------------
+ 
+ lta_inv1 <- readModels(here("LTA_models","4-Class-Invariant.out" ), quiet = TRUE)
+ 
+ par <- as_tibble(lta_inv1[["parameters"]][["unstandardized"]]) %>% 
+   select(1:3) %>% 
+   filter(grepl('ON|Means', paramHeader)) %>% 
+   mutate(est = as.numeric(est))
 
 # Name each parameter individually to make the subsequent calculations more readable
 a1 <- unlist(par[13,3]); a2 <- unlist(par[14,3]); a3 <- unlist(par[15,3]); b11 <- unlist(par[1,3]);
@@ -597,26 +604,338 @@ t_matrix %>%
   fmt_number(2:5,decimals = 2) %>% 
   tab_spanner(label = "10th grade",columns = 2:5)
 
-# -----------------------------------------------------------------------------
-# Plot LTA transitions 
+# --------------------------------------------------------------------------------------
+
+# Estimate RI-LTA Model (Random Intercept As Continuous Factor)
+
+# --------------------------------------------------------------------------------------
+
+## Invariant RI-LTA Model
+
+ri_lta <- mplusObject(
+  
+  TITLE = 
+    "RI-LTA (Invariant)", 
+  
+  VARIABLE = 
+    "usev = ab39m ab39t ab39u ab39w ab39x  ! 7th grade indicators
+             ga33a ga33h ga33i ga33k ga33l; ! 10th grade indicators
+             
+      categorical =AB39M AB39T AB39U AB39W AB39X
+              GA33A GA33H GA33I GA33K GA33L;
+              
+      classes = c1(4) c2(4);",
+  
+  ANALYSIS = 
+    "type = mixture;
+      starts = 1000 250;
+      process = 16(starts);
+      algorithm = integration;",
+  
+  MODEL = 
+    "%overall%
+
+      f by AB39M - AB39X* (p1-p5)  !!! specify random intercept as continuous latent factor !!!
+           GA33A - GA33L* (p1-p5);
+           
+      f@1; [f@0]; !!! fix random intercept variance to 1 and mean to 0 !!!
+
+      c2 on c1;
+
+      MODEL c1:
+      %c1#1%
+      [AB39M$1-AB39X$1] (1-5);
+
+      %c1#2%
+      [AB39M$1-AB39X$1] (6-10);
+
+      %c1#3%
+      [AB39M$1-AB39X$1] (11-15);
+
+      %c1#4%
+      [AB39M$1-AB39X$1] (16-20);
+
+      MODEL c2:
+      %c2#1%
+      [GA33A$1-GA33L$1] (1-5);
+
+      %c2#2%
+      [GA33A$1-GA33L$1] (6-10);
+
+      %c2#3%
+      [GA33A$1-GA33L$1] (11-15);
+
+      %c2#4%
+      [GA33A$1-GA33L$1] (16-20);",
+  
+  PLOT = 
+    "type = plot3; 
+    series= AB39M-AB39X (*);",
+  
+  usevariables = colnames(lsay_data),
+  rdata = lsay_data)
+
+ri_lta_fit <- mplusModeler(ri_lta,
+                           dataout=here("RI-LTA", "ri_lta.dat"),
+                           modelout=here("RI-LTA", "RI_LTA-invariant.inp"),
+                           check=TRUE, run = TRUE, hashfilename = FALSE)
+
 # -----------------------------------------------------------------------------
 
-MplusAutomation::plotLTA(lta_inv1)
+### Compare Model FIT: Invariant LTA, Non-Invariant LTA, & Invariant RI-LTA Models
+
+# Read
+LTA_noninvar <- lta_models$LTA.non.invariant.out
+RI_LTA <- readModels(here("RI-LTA", "ri_lta-invariant.out"), quiet = TRUE)
+
+#Extract
+enum_extract1 <- LatexSummaryTable(LTA_noninvar,                                 
+                                   keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC", "Observations")) 
+enum_extract2 <- LatexSummaryTable(LTA_invar,                                 
+                                   keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC", "Observations")) 
+enum_extract3 <- LatexSummaryTable(RI_LTA,                                 
+                                   keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC", "Observations")) 
+
 
 # -----------------------------------------------------------------------------
+
+allFit1 <- enum_extract1 %>% 
+  mutate(aBIC = -2*LL+Parameters*log((Observations+2)/24)) %>% 
+  mutate(CIAC = -2*LL+Parameters*(log(Observations)+1)) %>% 
+  mutate(AWE = -2*LL+2*Parameters*(log(Observations)+1.5)) %>%
+  mutate(SIC = -.5*BIC) %>% 
+  select(1:5) %>%
+  arrange(Parameters)
+
+allFit2 <- enum_extract2 %>% 
+  mutate(aBIC = -2*LL+Parameters*log((Observations+2)/24)) %>% 
+  mutate(CIAC = -2*LL+Parameters*(log(Observations)+1)) %>% 
+  mutate(AWE = -2*LL+2*Parameters*(log(Observations)+1.5)) %>%
+  mutate(SIC = -.5*BIC) %>% 
+  select(1:5) %>% 
+  arrange(Parameters)
+
+allFit3 <- enum_extract3 %>% 
+  mutate(aBIC = -2*LL+Parameters*log((Observations+2)/24)) %>% 
+  mutate(CIAC = -2*LL+Parameters*(log(Observations)+1)) %>% 
+  mutate(AWE = -2*LL+2*Parameters*(log(Observations)+1.5)) %>%
+  mutate(SIC = -.5*BIC) %>% 
+  select(1:5) %>% 
+  arrange(Parameters)
+
+allFit <- rbind(allFit1, allFit2, allFit3)
+
+# -----------------------------------------------------------------------------
+
+allFit %>% 
+  gt() %>%
+  tab_header(
+    title = md("**Model Fit Comparision Table**"), subtitle = md("&nbsp;")) %>% 
+  cols_label(
+    Title = "Model",
+    Parameters = md("Par"),
+    LL = md("*LL*"),
+    BIC = md("*BIC*"),
+    aBIC = md("aBIC")) %>% 
+  tab_footnote(
+    footnote = md(
+      "*Note.* Par = Parameters; *LL* = model log likelihood;
+      BIC = Bayesian information criterion;
+      aBIC = sample size adjusted BIC."), 
+    locations = cells_title()) %>% 
+  tab_options(column_labels.font.weight = "bold")
+
+
+# -----------------------------------------------------------------------------
+
+### Extract Invariant RI-LTA Mpdel Transitions
+
+ri_lta_out <- RI_LTA[["class_counts"]][["transitionProbs"]][["probability"]] %>% 
+  as.data.frame(as.numeric())
+
+ri_t_matrix <- tibble(
+  "Time1" = c("C1=Anti-Science","C1=Amb. w/ Elevated","C1=Pro-Science","C1=Amb. w/ Minimal"),
+  "C2=Anti-Science" = c(ri_lta_out[1,1],ri_lta_out[2,1],ri_lta_out[3,1],ri_lta_out[4,1]),
+  "C2=Amb. w/ Elevated" = c(ri_lta_out[5,1],ri_lta_out[6,1],ri_lta_out[7,1],ri_lta_out[8,1]),
+  "C2=Pro-Science" = c(ri_lta_out[9,1],ri_lta_out[10,1],ri_lta_out[11,1],ri_lta_out[12,1]),
+  "C2=Amb. w/ Minimal" = c(ri_lta_out[13,1],ri_lta_out[14,1],ri_lta_out[15,1],ri_lta_out[16,1]))
+
+
+# -----------------------------------------------------------------------------
+
+# Create table
+
+ri_t_matrix %>% 
+  gt(rowname_col = "Time1") %>%
+  tab_stubhead(label = "7th grade") %>% 
+  tab_header(
+    title = md("**Random Intercept Model Transition Matrix**"),
+    subtitle = md("**Student transitions from 7th grade (rows) to 10th grade (columns)**")) %>% 
+  fmt_number(2:5,decimals = 2) %>% 
+  tab_spanner(label = "10th grade",columns = 2:5) %>% 
+  tab_footnote(
+    footnote = md(
+      "*Note.* Transition matrix values are the identical to Table 5. However Table 5 
+    values are rearranged by class for interpretation purposes. Classes may be arranged 
+    directly through Mplus syntax using start values."), 
+    locations = cells_title())
+
+# -----------------------------------------------------------------------------
+
+## Invariant & Non-Invariant LTA Conditional Item Probability Plots
+
+# -----------------------------------------------------------------------------
+
+### Create a function for plotting the conditional item probabilities estimated from an LTA model. 
+
+# The `plot_lta_function` requires one additional argument called `timepoint` used to specify the time point to extract probabilities (e.g., `1`).
+
+plot_lta_function <- function(model_name,item_num,class_num,timepoint,item_labels,plot_title){
+  
+  # Extract Item Probabilities
+  mplus_model <- as_tibble(model_name$parameters$probability.scale) %>% 
+    filter(category=="2", str_detect(LatentClass, glue("C{timepoint}"))) %>% 
+    select(LatentClass,est, param) %>%
+    pivot_wider(names_from = LatentClass, values_from = est) %>% 
+    select(-param)
+  
+  # Create class size in percentages (%)
+  c_size <- as.data.frame(model_name$class_counts$modelEstimated) %>%
+    filter(str_detect(variable, glue("C{timepoint}"))) %>%
+    select(proportion)
+  colnames(c_size) <- paste0("cs")
+  c_size <- c_size %>% mutate(cs = round(cs * 100, 2))
+  colnames(mplus_model) <- paste0("C", 1:class_num, glue(" ({c_size[1:class_num,]}%)"))
+  
+  # Variable names
+  plot_t1 <- cbind(Var = paste0("U", 1:item_num), mplus_model)
+  plot_t1$Var <- factor(plot_t1$Var,
+                        labels = item_labels)
+  plot_t1$Var <- fct_inorder(plot_t1$Var)
+  pd_long_t1 <- melt(plot_t1, id.vars = "Var") 
+  
+  p <- pd_long_t1 %>%
+    ggplot(aes(x = as.integer(Var), y = value,
+               shape = variable, colour = variable, lty = variable)) +
+    geom_point(size = 4) + geom_line() + 
+    scale_x_continuous("", breaks = 1:item_num, labels = plot_t1$Var) + 
+    scale_colour_grey() + scale_y_continuous(limits = c(0,1)) + 
+    labs(title = plot_title, y = "Probability") +
+    theme_cowplot() +
+    theme(legend.title = element_blank(), 
+          legend.position = "top")
+  
+  p
+  return(p)
+}
+
+
+# -----------------------------------------------------------------------------
+### Invariant LTA Model - Conditional Item Probability Plot
+
+# For the invariant LTA model, conditional item probabilities are the same across time-points.
+
+plot_lta_function(
+  model_name = LTA_invar, 
+  item_num = 5,
+  class_num = 4,
+  timepoint = 1, 
+  item_labels = c("Enjoy","Useful","Logical","Job","Adult"),
+  plot_title = "Invariant LTA Conditional Item Probability Plot"
+)
+
+# -----------------------------------------------------------------------------
+
+ggsave(here("figures", "Invariant_LTA_plot.png"), dpi=300, height=5, width=7, units="in")
+
+# -----------------------------------------------------------------------------
+
+### Non-Invariant LTA - Conditional Item Probability Plot (Timepoint 1)
+
+T1 <- plot_lta_function(
+  model_name = LTA_noninvar, 
+  item_num = 5,
+  class_num = 4,
+  timepoint = 1,
+  item_labels = c("Enjoy","Useful","Logical","Job","Adult"),
+  plot_title = "Timepoint 1"
+)
+
+# -----------------------------------------------------------------------------
+
+### Non-Invariant RI-LTA - Conditional Item Probability Plot (Timepoint 2)
+
+T2 <- plot_lta_function(
+  model_name = LTA_noninvar, 
+  item_num = 5,
+  class_num = 4,
+  timepoint = 2,
+  item_labels = c("Enjoy","Useful","Logical","Job","Adult"),
+  plot_title = "Timepoint 2"
+)
+
+# -----------------------------------------------------------------------------
+
+# combine plots with the `patchwork` package
+
+T1 / T2 +
+  plot_annotation(title = 'Non-Invariant LTA Conditional Item Probability Plots')
+
+# -----------------------------------------------------------------------------
+
+ggsave(here("figures", "Non_Inv_LTA_plots_T1-T2.png"), dpi=300, height=5, width=12, units="in")
+
+# -----------------------------------------------------------------------------
+
+## LTA Transition Plot
+
+# This code is adapted from the source code for the `plotLTA` function found in the 
+# MplusAutomation package:
+# https://github.com/michaelhallquist/MplusAutomation/blob/995d1ecfae3656524153456ce647f86fe8c1cf1e/R/mixtures.R
+
+# **NOTE:** The function found in `plot_transitions_function.R` is specific to a model with 2 time-points and 4-classes & must be updated to accommodate other models. 
+
+# -----------------------------------------------------------------------------
+
+library(PNWColors); library(ggrepel)
+source("plot_transitions_function.R")
+
+lta_model <- readModels(here("LTA_models", "LTA-invariant.out"), quiet = TRUE)
+
+plot_lta_function(
+  model_name = lta_model,
+  color_pallete = pnw_palette("Bay", n=4, type = "discrete"),
+  facet_labels =c(
+    `1` = "Transitions to 10th Grade from the Pro-Science w/Elevated Utility Class",
+    `2` = "Transitions to 10th Grade from the Ambivalent w/Elevated Utility Class",
+    `3` = "Transitions to 10th Grade from the Ambivalent w/Minimal Utility Class",
+    `4` = "Transitions to 10th Grade from the Anti-Science w/Minimal Utility Class"),
+  timepoint_labels = c('1' = "7th Grade", '2' = "10th Grade"),
+  class_labels = c(
+    "Pro-Science / Elev. Utility", "Ambivalent / Elev. Utility",
+    "Ambivalent / Min. Utility", "Anti-Science / Min. Utility"))
+
+
+# --------------------------------------------------------------------------------------
+
+ggsave(here("figures","LTA_transition_plot.png"), dpi=500, height=7, width=8, units="in")
+
+# --------------------------------------------------------------------------------------
 
 # References
 
-# Hallquist, Michael N., and Joshua F. Wiley. 2018. “MplusAutomation: An R Package for FacilitatingLarge-Scale Latent Variable Analyses in Mplus.” Structural Equation Modeling, 1–18. https://doi.org/10.1080/10705511.2017.1402334.
+# Hallquist, Michael N., and Joshua F. Wiley. 2018. "MplusAutomation: An R Package for FacilitatingLarge-Scale Latent Variable Analyses in Mplus." Structural Equation Modeling, 1--18. <https://doi.org/10.1080/10705511.2017.1402334>.
+ 
+# Miller, Jon D. Longitudinal Study of American Youth (LSAY), Seventh Grade Data, 1987-1988; 2015-2016. Ann Arbor, MI: Inter-university Consortium for Political and Social Research [distributor], 2019-04-23. <https://doi.org/10.3886/ICPSR37287.v1>
+   
+#   Müller, Kirill. 2017.Here: A Simpler Way to Find Your Files. <https://CRAN.R-project.org/package=here>.
 
-# Miller, Jon D. Longitudinal Study of American Youth (LSAY), Seventh Grade Data, 1987-1988; 2015-2016. Ann Arbor, MI: Inter-university Consortium for Political and Social Research [distributor], 2019-04-23. https://doi.org/10.3886/ICPSR37287.v1
+# Muthén, B., & Asparouhov, T. (2020). Latent transition analysis with random intercepts (RI-LTA). Psychological Methods. Advance online publication. <https://doi.org/10.1037/met0000370>
+  
+#   Muthén L.K., & Muthen B.O. (1998-2017) Mplus User's Guide. Eight Edition. Los Angelos, CA: Muthen & Muthen.
 
-# Müller, Kirill. 2017.Here:  A Simpler Way to Find Your Files. https://CRAN.R-project.org/package=here.
+# R Core Team. 2019.R: A Language and Environment for Statistical Computing. Vienna, Austria: R Foundation for Statistical Computing. <https://www.R-project.org/>.
 
-# Muthen L.K., & Muthen B.O. (1998-2017) Mplus User's Guide. Eight Edition. Los Angelos, CA: Muthen & Muthen.
-
-# R Core Team. 2019.R: A Language and Environment for Statistical Computing. Vienna, Austria: R Foundation for Statistical Computing. https://www.R-project.org/.
-
-# Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D. A., François, R., ... & Kuhn, M. (2019). Welcome to the Tidyverse. Journal of Open Source Software, 4(43), 1686.
+# Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019). "Welcome to the tidyverse." Journal of Open Source Software, 4(43), 1686. doi: 10.21105/joss.01686.
 
 # -----------------------------------------------------------------------------

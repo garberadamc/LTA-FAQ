@@ -1,0 +1,61 @@
+TITLE:
+RI-LTA (Invariant)
+DATA:
+FILE = "/Users/agarber/Dropbox/LTA FAQ paper/LTA_MplusAuto_POST-REVISION/RI-LTA/ri_lta.dat";
+ 
+VARIABLE:
+NAMES = AB39M AB39T AB39U AB39W AB39X GA33A GA33H GA33I GA33K GA33L ENGINEER MATHG7
+     MATHG8 MATHG10 MATHG11 MATHG12 FEMALE KA9B KA9C KA9D KA9G KA9K CPROB11 CPROB12
+     CPROB13 CPROB14 CMOD1 CASENUM COHORT SOCISS2 OPKNOW2 SIOK2 CPROB21 CPROB22
+     CPROB23 CPROB24 CMOD2; 
+ MISSING=.;
+ usev = ab39m ab39t ab39u ab39w ab39x  ! 7th grade indicators
+             ga33a ga33h ga33i ga33k ga33l; ! 10th grade indicators
+             
+      categorical =AB39M AB39T AB39U AB39W AB39X
+              GA33A GA33H GA33I GA33K GA33L;
+              
+      classes = c1(4) c2(4);
+ANALYSIS:
+type = mixture;
+      starts = 1000 250;
+      process = 16(starts);
+      algorithm = integration;
+MODEL:
+%overall%
+
+      f by AB39M - AB39X* (p1-p5)  !!! specify random intercept as continuous latent factor !!!
+           GA33A - GA33L* (p1-p5);
+           
+      f@1; [f@0]; !!! fix random intercept variance to 1 and mean to 0 !!!
+
+      c2 on c1;
+
+      MODEL c1:
+      %c1#1%
+      [AB39M$1-AB39X$1] (1-5);
+
+      %c1#2%
+      [AB39M$1-AB39X$1] (6-10);
+
+      %c1#3%
+      [AB39M$1-AB39X$1] (11-15);
+
+      %c1#4%
+      [AB39M$1-AB39X$1] (16-20);
+
+      MODEL c2:
+      %c2#1%
+      [GA33A$1-GA33L$1] (1-5);
+
+      %c2#2%
+      [GA33A$1-GA33L$1] (6-10);
+
+      %c2#3%
+      [GA33A$1-GA33L$1] (11-15);
+
+      %c2#4%
+      [GA33A$1-GA33L$1] (16-20);
+PLOT:
+type = plot3; 
+    series= AB39M-AB39X (*);
