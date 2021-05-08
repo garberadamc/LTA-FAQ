@@ -415,7 +415,7 @@ lta_non_inv <- mplusObject(
 
 lta_non_inv_fit <- mplusModeler(lta_non_inv,
                      dataout=here("enum_LCA_time2", "lta.dat"),
-                     modelout=here("LTA_models", "4-class-non-invariant.inp"),
+                     modelout=here("lta_models", "4-class-non-invariant.inp"),
                      check=TRUE, run = TRUE, hashfilename = FALSE)
 
 # -----------------------------------------------------------------------------
@@ -466,7 +466,7 @@ lta_inv <- mplusObject(
       [GA33A$1-GA33L$1] (16-20);",
    
   SAVEDATA = 
-   "file = LTA_Inv_CPROBS.dat;
+   "file = lta-inv-cprobs.dat;
     save = cprob;
     missflag = 9999;",
 
@@ -492,19 +492,19 @@ lta_models <- readModels(here("LTA_models"), quiet = TRUE)
 # *0 = null or nested model & *1 = comparison or parent model
 
 # Log Likelihood Values
-L0 <- lta_models[["LTA.invariant.out"]][["summaries"]][["LL"]]
-L1 <- lta_models[["LTA.non.invariant.out"]][["summaries"]][["LL"]] 
+L0 <- lta_models[["lta.invariant.out"]][["summaries"]][["LL"]]
+L1 <- lta_models[["lta.non.invariant.out"]][["summaries"]][["LL"]] 
 
 # LRT equation
 lr <- -2*(L0-L1) 
 
 # Parameters
-p0 <- lta_models[["LTA.invariant.out"]][["summaries"]][["Parameters"]] 
-p1 <- lta_models[["LTA.non.invariant.out"]][["summaries"]][["Parameters"]]
+p0 <- lta_models[["lta.invariant.out"]][["summaries"]][["Parameters"]] 
+p1 <- lta_models[["lta.non.invariant.out"]][["summaries"]][["Parameters"]]
 
 # Scaling Correction Factors
-c0 <- lta_models[["LTA.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
-c1 <- lta_models[["LTA.non.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+c0 <- lta_models[["lta.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
+c1 <- lta_models[["lta.non.invariant.out"]][["summaries"]][["LLCorrectionFactor"]]
 
 # Difference Test Scaling correction
 cd <- ((p0*c0)-(p1*c1))/(p0-p1)
@@ -677,7 +677,7 @@ ri_lta <- mplusObject(
 
 ri_lta_fit <- mplusModeler(ri_lta,
                            dataout=here("RI-LTA", "ri_lta.dat"),
-                           modelout=here("RI-LTA", "RI_LTA-invariant.inp"),
+                           modelout=here("RI-LTA", "ri-lta-invariant.inp"),
                            check=TRUE, run = TRUE, hashfilename = FALSE)
 
 # -----------------------------------------------------------------------------
@@ -685,47 +685,33 @@ ri_lta_fit <- mplusModeler(ri_lta,
 ### Compare Model FIT: Invariant LTA, Non-Invariant LTA, & Invariant RI-LTA Models
 
 # Read
-LTA_noninvar <- lta_models$LTA.non.invariant.out
-RI_LTA <- readModels(here("RI-LTA", "ri_lta-invariant.out"), quiet = TRUE)
+lta_noninvar <- lta_models$lta.non.invariant.out
+ri_lta <- readModels(here("RI-LTA", "ri-lta-invariant.out"), quiet = TRUE)
 
 #Extract
-enum_extract1 <- LatexSummaryTable(LTA_noninvar,                                 
+enum_extract1 <- LatexSummaryTable(lta_noninvar,                                 
                                    keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC", "Observations")) 
-enum_extract2 <- LatexSummaryTable(LTA_invar,                                 
+enum_extract2 <- LatexSummaryTable(lta_invar,                                 
                                    keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC", "Observations")) 
-enum_extract3 <- LatexSummaryTable(RI_LTA,                                 
+enum_extract3 <- LatexSummaryTable(ri_lta,                                 
                                    keepCols=c("Title", "Parameters", "LL", "BIC", "aBIC", "Observations")) 
 
 
 # -----------------------------------------------------------------------------
 
-allFit1 <- enum_extract1 %>% 
+### Calculate indices derived from the Log Likelihood (LL)
+
+allFit <- rbind(enum_extract1, enum_extract2, enum_extract3) %>% 
   mutate(aBIC = -2*LL+Parameters*log((Observations+2)/24)) %>% 
   mutate(CIAC = -2*LL+Parameters*(log(Observations)+1)) %>% 
   mutate(AWE = -2*LL+2*Parameters*(log(Observations)+1.5)) %>%
   mutate(SIC = -.5*BIC) %>% 
-  select(1:5) %>%
-  arrange(Parameters)
+  select(1:5) 
 
-allFit2 <- enum_extract2 %>% 
-  mutate(aBIC = -2*LL+Parameters*log((Observations+2)/24)) %>% 
-  mutate(CIAC = -2*LL+Parameters*(log(Observations)+1)) %>% 
-  mutate(AWE = -2*LL+2*Parameters*(log(Observations)+1.5)) %>%
-  mutate(SIC = -.5*BIC) %>% 
-  select(1:5) %>% 
-  arrange(Parameters)
-
-allFit3 <- enum_extract3 %>% 
-  mutate(aBIC = -2*LL+Parameters*log((Observations+2)/24)) %>% 
-  mutate(CIAC = -2*LL+Parameters*(log(Observations)+1)) %>% 
-  mutate(AWE = -2*LL+2*Parameters*(log(Observations)+1.5)) %>%
-  mutate(SIC = -.5*BIC) %>% 
-  select(1:5) %>% 
-  arrange(Parameters)
-
-allFit <- rbind(allFit1, allFit2, allFit3)
 
 # -----------------------------------------------------------------------------
+
+### Format fit table
 
 allFit %>% 
   gt() %>%
@@ -750,7 +736,7 @@ allFit %>%
 
 ### Extract Invariant RI-LTA Mpdel Transitions
 
-ri_lta_out <- RI_LTA[["class_counts"]][["transitionProbs"]][["probability"]] %>% 
+ri_lta_out <- ri_lta[["class_counts"]][["transitionProbs"]][["probability"]] %>% 
   as.data.frame(as.numeric())
 
 ri_t_matrix <- tibble(
@@ -836,7 +822,7 @@ plot_lta_function <- function(model_name,item_num,class_num,timepoint,item_label
 # For the invariant LTA model, conditional item probabilities are the same across time-points.
 
 plot_lta_function(
-  model_name = LTA_invar, 
+  model_name = lta_invar, 
   item_num = 5,
   class_num = 4,
   timepoint = 1, 
@@ -853,7 +839,7 @@ ggsave(here("figures", "Invariant_LTA_plot.png"), dpi=300, height=5, width=7, un
 ### Non-Invariant LTA - Conditional Item Probability Plot (Timepoint 1)
 
 T1 <- plot_lta_function(
-  model_name = LTA_noninvar, 
+  model_name = lta_noninvar, 
   item_num = 5,
   class_num = 4,
   timepoint = 1,
@@ -866,7 +852,7 @@ T1 <- plot_lta_function(
 ### Non-Invariant RI-LTA - Conditional Item Probability Plot (Timepoint 2)
 
 T2 <- plot_lta_function(
-  model_name = LTA_noninvar, 
+  model_name = lta_noninvar, 
   item_num = 5,
   class_num = 4,
   timepoint = 2,
@@ -900,7 +886,7 @@ ggsave(here("figures", "Non_Inv_LTA_plots_T1-T2.png"), dpi=300, height=5, width=
 library(PNWColors); library(ggrepel)
 source("plot_transitions_function.R")
 
-lta_model <- readModels(here("LTA_models", "LTA-invariant.out"), quiet = TRUE)
+lta_model <- readModels(here("LTA_models", "lta-invariant.out"), quiet = TRUE)
 
 plot_lta_function(
   model_name = lta_model,
