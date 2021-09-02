@@ -16,13 +16,7 @@ output:
 ---
 
 ```{r setup, include=FALSE, eval=TRUE}
-knitr::opts_chunk$set(
-	eval = FALSE,
-	echo = TRUE,
-	message = FALSE,
-	warning = FALSE
-)
-
+knitr::opts_chunk$set(eval = FALSE, echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 # --------------------------------------------------------------------------------------
@@ -209,6 +203,10 @@ enum_t2_fit <- mplusModeler(enum_t2,
 # --------------------------------------------------------------------------------------
 
 # Create Model Fit Summary Table
+
+The following syntax for producing publication ready fit tables can be cited using the following citation:
+
+Garber, A. C. (2021). Creating Summary Fit Tables for LCA and LTA Analyses Using MplusAutomation. [$\color{blue}{\text{Retrieved from psyarxiv.com/uq2fh}}$](https://psyarxiv.com/uq2fh)
 
 # --------------------------------------------------------------------------------------
 
