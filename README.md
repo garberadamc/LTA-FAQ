@@ -1,6 +1,6 @@
 # LTA-FAQ
 
-Repository associated with LTA-FAQ paper (in review)
+Repository associated with LTA-FAQ paper
 
 Appendix B: Analysis, tabulation, & plotting
 
