@@ -1,8 +1,24 @@
 # LTA-FAQ
 
-Repository associated with LTA-FAQ paper
+Repository associated with paper:
 
-Appendix B: Analysis, tabulation, & plotting
+"Ten Frequently Asked Questions About Latent Transition Analysis"
+
+https://psycnet.apa.org/record/2022-79821-001
+
+- - -
+
+Supplement A: Annotated Mplus output file
+
+https://supp.apa.org/psycarticles/supplemental/met0000486/SupplementB.pdf
+
+- - -
+
+Supplement B: Analysis, tabulation, & plotting
+
+https://supp.apa.org/psycarticles/supplemental/met0000486/SupplementA.pdf
+
+- - -
 
 University of California, Santa Barbara 
 
